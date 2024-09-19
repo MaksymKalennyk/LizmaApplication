@@ -1,6 +1,6 @@
 package com.example.lizma.service;
 
-import com.example.lizma.model.Role;
+import com.example.lizma.model.enums.Role;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.dto.JwtAuthenticationResponse;
 import com.example.lizma.model.dto.SignUpRequest;

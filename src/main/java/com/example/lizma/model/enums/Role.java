@@ -1,4 +1,4 @@
-package com.example.lizma.model;
+package com.example.lizma.model.enums;
 
 public enum Role {
     ROLE_USER,
