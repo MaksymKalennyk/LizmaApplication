@@ -1,6 +1,7 @@
 package com.example.lizma.service;
 
-import com.example.lizma.model.Role;
+import com.example.lizma.exception.UserNotFoundException;
+import com.example.lizma.model.enums.Role;
 import com.example.lizma.model.Users;
 import com.example.lizma.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.security.Principal;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +43,12 @@ public class UserService {
     public Users getCurrentUser() {
         var username = SecurityContextHolder.getContext().getAuthentication().getName();
         return getByUsername(username);
+    }
+
+    public Long getCurrentUserId(Principal principal) {
+        Users user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new UserNotFoundException("Користувача не знайдено"));
+        return user.getId();
     }
 
     public Long getUserIdFromToken(String token) {
