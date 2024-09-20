@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -97,7 +96,7 @@ public class FriendRequestService {
                 .orElseThrow(() -> new UserNotFoundException("Користувача-ініціатора не знайдено"));
 
         // Генерація унікального токена
-        String token = UUID.randomUUID().toString();
+        String token = requester.getUsername();
 
         // Створення посилання
         FriendRequestLink link = FriendRequestLink.builder()
