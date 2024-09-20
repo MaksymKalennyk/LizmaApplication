@@ -1,5 +1,6 @@
 package com.example.lizma.model;
 
+import com.example.lizma.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -7,7 +8,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -23,6 +26,18 @@ public class Users implements UserDetails {
     private Long id;
     private String username;
     private String password;
+
+    // Список відправлених запитів
+    @OneToMany(mappedBy = "requester")
+    private Set<FriendRequest> sentRequests = new HashSet<>();
+
+    // Список отриманих запитів
+    @OneToMany(mappedBy = "recipient")
+    private Set<FriendRequest> receivedRequests = new HashSet<>();
+
+    // Список друзів
+    @OneToMany(mappedBy = "user1")
+    private Set<Friendship> friendships = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
