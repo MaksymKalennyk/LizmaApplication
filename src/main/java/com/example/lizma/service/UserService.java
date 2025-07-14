@@ -47,7 +47,7 @@ public class UserService {
 
     public Long getCurrentUserId(Principal principal) {
         Users user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new UserNotFoundException("Користувача не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         return user.getId();
     }
 

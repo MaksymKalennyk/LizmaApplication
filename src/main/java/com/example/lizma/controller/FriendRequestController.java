@@ -28,7 +28,7 @@ public class FriendRequestController {
     public ResponseEntity<String> sendFriendRequest(@PathVariable Long recipientId, Principal principal) {
         Long requesterId = userService.getCurrentUserId(principal);
         friendRequestService.sendFriendRequest(requesterId, recipientId);
-        return ResponseEntity.ok("Запит на дружбу відправлено.");
+        return ResponseEntity.ok("Request sent.");
     }
 
     @Operation(summary = "Get received friend requests")
@@ -51,7 +51,7 @@ public class FriendRequestController {
         Long userId = userService.getCurrentUserId(principal);
         FriendRequestStatus requestStatus = FriendRequestStatus.valueOf(status.toUpperCase());
         friendRequestService.respondToFriendRequest(requestId, requestStatus, userId);
-        return ResponseEntity.ok("Статус запиту оновлено.");
+        return ResponseEntity.ok("Successfully responded.");
     }
 
     @Operation(summary = "Generate a friend request link")

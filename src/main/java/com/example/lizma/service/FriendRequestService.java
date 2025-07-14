@@ -23,26 +23,24 @@ public class FriendRequestService {
     private final FriendshipRepository friendshipRepository;
     private final FriendRequestLinkRepository friendRequestLinkRepository;
 
-    // Відправка запиту на дружбу
     public void sendFriendRequest(Long requesterId, Long recipientId) {
         if (requesterId.equals(recipientId)) {
-            throw new InvalidActionException("Ви не можете відправити запит самому собі");
+            throw new InvalidActionException("You are not allowed to send friend request");
         }
 
         Users requester = userRepository.findById(requesterId)
-                .orElseThrow(() -> new UserNotFoundException("Користувача-ініціатора не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         Users recipient = userRepository.findById(recipientId)
-                .orElseThrow(() -> new UserNotFoundException("Користувача-отримувача не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // Перевірка на існуючий запит або дружбу
         if (friendRequestRepository.findByRequesterAndRecipient(requester, recipient).isPresent()) {
-            throw new FriendRequestAlreadyExistsException("Запит на дружбу вже відправлено");
+            throw new FriendRequestAlreadyExistsException("Request already exists");
         }
 
         if (friendshipRepository.existsByUser1AndUser2AndStatus(requester, recipient, FriendshipStatus.CONFIRMED) ||
                 friendshipRepository.existsByUser1AndUser2AndStatus(recipient, requester, FriendshipStatus.CONFIRMED)) {
-            throw new InvalidActionException("Користувачі вже є друзями");
+            throw new InvalidActionException("Users are already friends");
         }
 
         FriendRequest friendRequest = FriendRequest.builder()
@@ -54,33 +52,29 @@ public class FriendRequestService {
         friendRequestRepository.save(friendRequest);
     }
 
-    // Отримання отриманих запитів
     public List<FriendRequest> getReceivedRequests(Long userId) {
         Users recipient = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Користувача не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return friendRequestRepository.findByRecipientAndStatus(recipient, FriendRequestStatus.PENDING);
     }
 
-    // Відповідь на запит
     public void respondToFriendRequest(Long requestId, FriendRequestStatus status, Long userId) {
         FriendRequest friendRequest = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new FriendRequestNotFoundException("Запит на дружбу не знайдено"));
+                .orElseThrow(() -> new FriendRequestNotFoundException("Request not found"));
 
-        // Перевірка, чи поточний користувач є отримувачем запиту
         if (!friendRequest.getRecipient().getId().equals(userId)) {
-            throw new UnauthorizedActionException("Ви не маєте права відповідати на цей запит");
+            throw new UnauthorizedActionException("You are not allowed to respond to friend request");
         }
 
         if (friendRequest.getStatus() != FriendRequestStatus.PENDING) {
-            throw new FriendRequestAlreadyProcessedException("Запит на дружбу вже оброблено");
+            throw new FriendRequestAlreadyProcessedException("Request is already pending");
         }
 
         friendRequest.setStatus(status);
         friendRequestRepository.save(friendRequest);
 
         if (status == FriendRequestStatus.ACCEPTED) {
-            // Створення дружби
             Friendship friendship = Friendship.builder()
                     .user1(friendRequest.getRequester())
                     .user2(friendRequest.getRecipient())
@@ -93,12 +87,10 @@ public class FriendRequestService {
 
     public String generateFriendRequestLink(Long requesterId) {
         Users requester = userRepository.findById(requesterId)
-                .orElseThrow(() -> new UserNotFoundException("Користувача-ініціатора не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // Генерація унікального токена
         String token = requester.getUsername();
 
-        // Створення посилання
         FriendRequestLink link = FriendRequestLink.builder()
                 .token(token)
                 .requester(requester)
@@ -107,31 +99,27 @@ public class FriendRequestService {
 
         friendRequestLinkRepository.save(link);
 
-        // Повернення повного URL
         return "localhost:8080/user/friend-request/accept?token=" + token;
     }
 
 
     public String processFriendRequestLink(String token, Long recipientId) {
         FriendRequestLink link = friendRequestLinkRepository.findByToken(token)
-                .orElseThrow(() -> new InvalidLinkException("Недійсне або прострочене посилання"));
+                .orElseThrow(() -> new InvalidLinkException("Expired link"));
 
-        // Перевірка терміну дії посилання
         if (link.getExpiryDate() != null && link.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new InvalidLinkException("Посилання прострочене");
+            throw new InvalidLinkException("Expired link");
         }
 
         Users requester = link.getRequester();
         Users recipient = userRepository.findById(recipientId)
-                .orElseThrow(() -> new UserNotFoundException("Користувача не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // Перевірка на існуючу дружбу
         if (friendshipRepository.existsByUser1AndUser2AndStatus(requester, recipient, FriendshipStatus.CONFIRMED) ||
                 friendshipRepository.existsByUser1AndUser2AndStatus(recipient, requester, FriendshipStatus.CONFIRMED)) {
-            throw new InvalidActionException("Ви вже є друзями");
+            throw new InvalidActionException("You are already friend");
         }
 
-        // Створення дружби
         Friendship friendship = Friendship.builder()
                 .user1(requester)
                 .user2(recipient)
@@ -140,7 +128,6 @@ public class FriendRequestService {
 
         friendshipRepository.save(friendship);
 
-        // Видалення посилання
         friendRequestLinkRepository.delete(link);
 
         return "Ви тепер друзі!";
