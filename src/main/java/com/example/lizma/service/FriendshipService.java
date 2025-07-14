@@ -21,7 +21,7 @@ public class FriendshipService {
     // Отримання списку друзів користувача
     public List<Friendship> getUserFriendships(Long userId) {
         Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Користувача не знайдено"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return friendshipRepository.findByUser1AndStatusOrUser2AndStatus(
                 user, FriendshipStatus.CONFIRMED, user, FriendshipStatus.CONFIRMED);
