@@ -62,6 +62,7 @@ public class FriendRequestController {
     public ResponseEntity<String> generateFriendRequestLink(Principal principal) {
         Long requesterId = userService.getCurrentUserId(principal);
         String linkUrl = friendRequestService.generateFriendRequestLink(requesterId);
+        System.out.println(linkUrl);
         return ResponseEntity.ok(linkUrl);
     }
 }
