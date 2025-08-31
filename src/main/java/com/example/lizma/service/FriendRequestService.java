@@ -130,6 +130,19 @@ public class FriendRequestService {
 
         friendRequestLinkRepository.delete(link);
 
-        return "Ви тепер друзі!";
+        return "You are friends now!";
     }
+
+    public List<FriendRequest> getReceivedFriendRequests(Long recipientId) {
+        Users recipient = userRepository.findById(recipientId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return friendRequestRepository.findByRecipientAndStatus(recipient, FriendRequestStatus.PENDING);
+    }
+
+    public List<FriendRequest> getSentFriendRequests(Long requesterId) {
+        Users requester = userRepository.findById(requesterId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return friendRequestRepository.findByRequester(requester);
+    }
+
 }

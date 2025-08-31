@@ -6,10 +6,13 @@ import com.example.lizma.model.dto.JwtAuthenticationResponse;
 import com.example.lizma.model.dto.SignUpRequest;
 import com.example.lizma.model.dto.SignInRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,9 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public JwtAuthenticationResponse signUp(SignUpRequest request) {
+        if (userService.usernameExists(request.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
+        }
 
         var user = Users.builder()
                 .username(request.getUsername())
@@ -33,10 +39,18 @@ public class AuthenticationService {
     }
 
     public JwtAuthenticationResponse signIn(SignInRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                request.getUsername(),
-                request.getPassword()
-        ));
+        if (!userService.usernameExists(request.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, please sign up");
+        }
+
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    request.getUsername(),
+                    request.getPassword()
+            ));
+        } catch (BadCredentialsException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
+        }
 
         var user = userService
                 .userDetailsService()

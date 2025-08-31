@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
 
 import java.security.Principal;
 
@@ -60,4 +61,14 @@ public class UserService {
         user.setRole(Role.ROLE_ADMIN);
         save(user);
     }
+
+    public java.util.List<Users> searchByUsername(String query, int limit) {
+        int size = (limit <= 0 || limit > 50) ? 20 : limit;
+        return userRepository.findByUsernameContainingIgnoreCase(query, PageRequest.of(0, size));
+    }
+
+    public boolean usernameExists(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
 }
