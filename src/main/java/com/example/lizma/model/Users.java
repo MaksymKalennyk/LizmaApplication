@@ -27,15 +27,12 @@ public class Users implements UserDetails {
     private String username;
     private String password;
 
-    // Список відправлених запитів
     @OneToMany(mappedBy = "requester")
     private Set<FriendRequest> sentRequests = new HashSet<>();
 
-    // Список отриманих запитів
     @OneToMany(mappedBy = "recipient")
     private Set<FriendRequest> receivedRequests = new HashSet<>();
 
-    // Список друзів
     @OneToMany(mappedBy = "user1")
     private Set<Friendship> friendships = new HashSet<>();
 

@@ -18,15 +18,12 @@ public class FriendRequestLink {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Унікальний токен для посилання
     @Column(unique = true, nullable = false)
     private String token;
 
-    // Ініціатор запрошення
     @ManyToOne
     @JoinColumn(name = "requester_id", nullable = false)
     private Users requester;
 
-    // Дата закінчення дії посилання (необов'язково)
     private LocalDateTime expiryDate;
 }
