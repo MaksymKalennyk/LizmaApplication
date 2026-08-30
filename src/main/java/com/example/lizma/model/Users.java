@@ -36,6 +36,10 @@ public class Users implements UserDetails {
     @OneToMany(mappedBy = "user1")
     private Set<Friendship> friendships = new HashSet<>();
 
+    @OneToMany(mappedBy = "author")
+    private List<Post> posts;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
