@@ -26,13 +26,8 @@ actor MusicService {
             throw NSError(domain: "MusicService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Bad Spotify config"])
         }
 
-        let scopes = [
-            "user-read-email",
-            "user-read-private",
-            "user-read-playback-state",
-            "user-modify-playback-state",
-            "streaming"
-        ].joined(separator: " ")
+        // Track search needs no scope at all; these read-only ones are for "share what I'm playing".
+        let scopes = AppConfig.spotifyScopes.joined(separator: " ")
 
         guard let scopeEnc = scopes.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             throw NSError(domain: "MusicService", code: 2, userInfo: [NSLocalizedDescriptionKey: "Bad scopes"])
