@@ -24,3 +24,6 @@ DerivedData/
 *.log
 lizma/*.log
 lizma/build/
+
+# Local environment (secrets)
+.env

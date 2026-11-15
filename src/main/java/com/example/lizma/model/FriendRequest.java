@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "friend_requests")
+@Table(name = "friend_requests",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"requester_id", "recipient_id"}))
 public class FriendRequest {
 
     @Id

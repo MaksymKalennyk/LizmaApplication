@@ -1,7 +1,9 @@
 package com.example.lizma.exception;
 
-public class InvalidActionException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class InvalidActionException extends ApiException {
     public InvalidActionException(String message) {
-        super(message);
+        super(HttpStatus.BAD_REQUEST, message);
     }
 }

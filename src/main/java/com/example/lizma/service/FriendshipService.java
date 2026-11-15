@@ -1,55 +1,69 @@
 package com.example.lizma.service;
 
-import com.example.lizma.exception.UserNotFoundException;
+import com.example.lizma.exception.InvalidActionException;
 import com.example.lizma.model.Friendship;
-import com.example.lizma.model.enums.FriendshipStatus;
 import com.example.lizma.model.Users;
+import com.example.lizma.repo.FriendRequestRepository;
 import com.example.lizma.repo.FriendshipRepository;
-import com.example.lizma.repo.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.example.lizma.model.enums.FriendRequestStatus.ACCEPTED;
+import static com.example.lizma.model.enums.FriendshipStatus.CONFIRMED;
 
 @Service
 @RequiredArgsConstructor
 public class FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
-    private final UserRepository userRepository;
+    private final FriendRequestRepository friendRequestRepository;
+    private final UserService userService;
 
+    @Transactional(readOnly = true)
     public List<Friendship> getUserFriendships(Long userId) {
-        Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        return friendshipRepository.findByUser1AndStatusOrUser2AndStatus(
-                user, FriendshipStatus.CONFIRMED, user, FriendshipStatus.CONFIRMED);
+        Users user = userService.getById(userId);
+        return friendshipRepository.findByUser1AndStatusOrUser2AndStatus(user, CONFIRMED, user, CONFIRMED);
     }
 
+    /** The other side of every confirmed friendship of the user. */
+    @Transactional(readOnly = true)
+    public List<Users> getFriends(Users user) {
+        return friendshipRepository.findByUser1AndStatusOrUser2AndStatus(user, CONFIRMED, user, CONFIRMED).stream()
+                .map(friendship -> friendship.getUser1().getId().equals(user.getId())
+                        ? friendship.getUser2()
+                        : friendship.getUser1())
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean areFriends(Users a, Users b) {
+        return friendshipRepository.existsBetween(a, b, CONFIRMED);
+    }
+
+    /**
+     * Makes two users friends; safe to call repeatedly. The pair is stored with the smaller id first
+     * (a unique index then rules out duplicates) and pending requests between them are marked accepted.
+     *
+     * @return true if a new friendship was created, false if they already were friends
+     */
     @Transactional
-    public void ensureFriendship(Long userAId, Long userBId) {
-        if (userAId == null || userBId == null || userAId.equals(userBId)) return;
-
-        Users a = userRepository.findById(userAId)
-                .orElseThrow(() -> new UserNotFoundException("User A not found"));
-        Users b = userRepository.findById(userBId)
-                .orElseThrow(() -> new UserNotFoundException("User B not found"));
-
-        Users u1 = a.getId() < b.getId() ? a : b;
-        Users u2 = a.getId() < b.getId() ? b : a;
-
-        boolean already =
-                friendshipRepository.existsByUser1AndUser2AndStatus(u1, u2, FriendshipStatus.CONFIRMED);
-
-        if (!already) {
-            friendshipRepository.save(
-                    Friendship.builder()
-                            .user1(u1)
-                            .user2(u2)
-                            .status(FriendshipStatus.CONFIRMED)
-                            .build()
-            );
+    public boolean befriend(Users a, Users b) {
+        if (a.getId().equals(b.getId())) {
+            throw new InvalidActionException("You can't add yourself as a friend");
         }
+        friendRequestRepository.findPendingBetween(a, b).forEach(request -> request.setStatus(ACCEPTED));
+        if (areFriends(a, b)) {
+            return false;
+        }
+        boolean aFirst = a.getId() < b.getId();
+        friendshipRepository.save(Friendship.builder()
+                .user1(aFirst ? a : b)
+                .user2(aFirst ? b : a)
+                .status(CONFIRMED)
+                .build());
+        return true;
     }
 }
