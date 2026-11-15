@@ -58,6 +58,7 @@ public class SecurityConfiguration {
                 }))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/auth/**", "/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/legal", "/privacy", "/terms").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, invitesPathPrefix + "/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -3,52 +3,41 @@ import SwiftUI
 struct CommentRowView: View {
     @Binding var comment: CommentResponse
     let isReply: Bool
+    /// Report/block are only offered on other people's comments.
+    let selfUsername: String?
     let onReply: (CommentResponse) -> Void
     let onLike: (Int) -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 12) {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: isReply ? 28 : 36, height: isReply ? 28 : 36)
-                    .overlay(Text(String(comment.authorUsername.prefix(1).uppercased())).font(isReply ? .caption : .subheadline).foregroundColor(.primary))
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(comment.authorUsername).font(.subheadline).bold()
-                        Text(formatDate(comment.createdAt)).font(.caption2).foregroundColor(.secondary)
-                    }
-                    Text(comment.content).font(.body)
-                    
-                    HStack(spacing: 16) {
-                        Button {
-                            onReply(comment)
-                        } label: {
-                            Text("Reply").font(.caption).foregroundColor(.secondary).bold()
-                        }
-                    }
-                    .padding(.top, 2)
-                }
-                
-                Spacer()
+    let onReport: (CommentResponse) -> Void
+    let onBlock: (CommentResponse) -> Void
 
-                Button {
-                    onLike(comment.id)
-                } label: {
-                    VStack(spacing: 2) {
-                        Image(systemName: comment.isLikedByCurrentUser ? "heart.fill" : "heart")
-                            .foregroundColor(comment.isLikedByCurrentUser ? .red : .gray)
-                            .font(.system(size: 14))
-                        if comment.likesCount > 0 {
-                            Text("\(comment.likesCount)")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+    static let avatarSize: CGFloat = 36
+    static let replyAvatarSize: CGFloat = 28
+    static let avatarSpacing: CGFloat = 12
+
+    private var isOwnComment: Bool {
+        comment.authorUsername == selfUsername
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if isOwnComment {
+                commentRow
+            } else {
+                // Only on this comment's own row, so a reply's menu targets the reply.
+                commentRow
+                    .contentShape(Rectangle())
+                    .contextMenu {
+                        Button {
+                            onReport(comment)
+                        } label: {
+                            Label("Report comment", systemImage: "exclamationmark.bubble")
+                        }
+                        Button(role: .destructive) {
+                            onBlock(comment)
+                        } label: {
+                            Label("Block \(comment.authorUsername)", systemImage: "hand.raised")
                         }
                     }
-                }
-                .accessibilityLabel(comment.isLikedByCurrentUser ? "Unlike" : "Like")
-                .accessibilityValue("\(comment.likesCount) likes")
             }
 
             if let replies = comment.replies, !replies.isEmpty {
@@ -56,37 +45,76 @@ struct CommentRowView: View {
                     CommentRowView(
                         comment: $reply,
                         isReply: true,
-                        onReply: onReply, 
-                        onLike: onLike
+                        selfUsername: selfUsername,
+                        onReply: onReply,
+                        onLike: onLike,
+                        onReport: onReport,
+                        onBlock: onBlock
                     )
-                    .padding(.leading, 40)
-                    .padding(.top, 4)
+                    // Replies start where the parent's text starts.
+                    .padding(.leading, Self.avatarSize + Self.avatarSpacing)
                 }
             }
         }
     }
-    
-    // Formatters are expensive to create; one set is shared by all rows.
-    private static let isoWithFraction: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
-    private static let isoPlain = ISO8601DateFormatter()
-    private static let relative: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter
-    }()
 
-    private func formatDate(_ dateString: String) -> String {
-        guard let date = Self.isoWithFraction.date(from: dateString) ?? Self.isoPlain.date(from: dateString) else {
-            return dateString
+    private var commentRow: some View {
+        HStack(alignment: .top, spacing: Self.avatarSpacing) {
+            AvatarView(username: comment.authorUsername,
+                       size: isReply ? Self.replyAvatarSize : Self.avatarSize)
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(comment.authorUsername)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Text(RelativeTime.string(from: comment.createdAt))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .layoutPriority(1)
+                }
+
+                Text(comment.content)
+                    .font(.body)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    onReply(comment)
+                } label: {
+                    Text("Reply")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                onLike(comment.id)
+            } label: {
+                VStack(spacing: 2) {
+                    Image(systemName: comment.isLikedByCurrentUser ? "heart.fill" : "heart")
+                        .font(.system(size: 15))
+                        .foregroundStyle(comment.isLikedByCurrentUser ? Color.red : Color.secondary)
+                        .symbolEffect(.bounce, value: comment.isLikedByCurrentUser)
+                    // Always there, so hearts line up whether or not a comment has likes.
+                    Text(comment.likesCount > 0 ? "\(comment.likesCount)" : " ")
+                        .font(.caption2)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 36)
+                .padding(.top, 2)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(comment.isLikedByCurrentUser ? "Unlike" : "Like")
+            .accessibilityValue("\(comment.likesCount) likes")
         }
-        // The formatter turns a few seconds (or a tiny clock skew) into "in 0 sec".
-        if abs(date.timeIntervalSinceNow) < 60 {
-            return "just now"
-        }
-        return Self.relative.localizedString(for: date, relativeTo: Date())
+        .id(comment.id)
     }
 }

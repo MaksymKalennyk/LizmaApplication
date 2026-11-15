@@ -4,6 +4,7 @@ import com.example.lizma.model.Friendship;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.enums.FriendshipStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,4 +21,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
               and ((f.user1 = :a and f.user2 = :b) or (f.user1 = :b and f.user2 = :a))
             """)
     boolean existsBetween(@Param("a") Users a, @Param("b") Users b, @Param("status") FriendshipStatus status);
+
+    @Modifying
+    @Query("delete from Friendship f where (f.user1 = :a and f.user2 = :b) or (f.user1 = :b and f.user2 = :a)")
+    void deleteBetween(@Param("a") Users a, @Param("b") Users b);
 }

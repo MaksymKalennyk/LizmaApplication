@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,8 +41,11 @@ public class PostService {
     private final PostCommentRepository commentRepository;
     private final UserService userService;
     private final FriendshipService friendshipService;
+    private final BlockService blockService;
+    private final ContentFilter contentFilter;
 
     public PostResponse createPost(Long authorId, PostRequest request) {
+        contentFilter.check(request.getCaption());
         Users author = userService.getById(authorId);
         Post post = Post.builder()
                 .author(author)
@@ -71,7 +75,7 @@ public class PostService {
     /** Same emoji again removes the reaction, a different one replaces it. */
     public void reactToPost(Long userId, Long postId, String type) {
         Users user = userService.getById(userId);
-        Post post = getVisiblePost(postId, user);
+        Post post = requireVisiblePost(postId, user);
         if (post.getAuthor().getId().equals(user.getId())) {
             throw new InvalidActionException("You can't react to your own post");
         }
@@ -90,8 +94,9 @@ public class PostService {
     }
 
     public CommentResponse addComment(Long userId, Long postId, CommentRequest request) {
+        contentFilter.check(request.getContent());
         Users author = userService.getById(userId);
-        Post post = getVisiblePost(postId, author);
+        Post post = requireVisiblePost(postId, author);
 
         PostComment parent = null;
         if (request.getParentId() != null) {
@@ -114,8 +119,11 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<CommentResponse> getComments(Long postId, Long userId) {
         Users viewer = userService.getById(userId);
-        Post post = getVisiblePost(postId, viewer);
-        List<PostComment> comments = commentRepository.findByPostOrderByCreatedAtAsc(post);
+        Post post = requireVisiblePost(postId, viewer);
+        Set<Long> hidden = blockService.hiddenUserIds(viewer.getId());
+        List<PostComment> comments = commentRepository.findByPostOrderByCreatedAtAsc(post).stream()
+                .filter(comment -> !hidden.contains(comment.getAuthor().getId()))
+                .toList();
 
         Map<Long, List<PostComment>> repliesByThread = comments.stream()
                 .filter(comment -> comment.getParentComment() != null)
@@ -135,7 +143,7 @@ public class PostService {
         PostComment comment = commentRepository.findById(commentId)
                 .filter(c -> c.getPost().getId().equals(postId))
                 .orElseThrow(() -> new NotFoundException("Comment not found"));
-        getVisiblePost(postId, user);
+        requireVisiblePost(postId, user);
 
         boolean unliked = comment.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
         if (!unliked) {
@@ -150,7 +158,9 @@ public class PostService {
         if (!post.getAuthor().getId().equals(userId)) {
             throw new UnauthorizedActionException("Only the author can see who reacted");
         }
+        Set<Long> hidden = blockService.hiddenUserIds(userId);
         return reactionRepository.findByPost(post).stream()
+                .filter(reaction -> !hidden.contains(reaction.getUser().getId()))
                 .map(reaction -> ReactionDetailResponse.builder()
                         .authorId(reaction.getUser().getId())
                         .authorUsername(reaction.getUser().getUsername())
@@ -160,8 +170,9 @@ public class PostService {
                 .toList();
     }
 
-    /** A post is visible to its author and the author's friends; for everyone else it doesn't exist. */
-    private Post getVisiblePost(Long postId, Users viewer) {
+    /** A post is visible to its author and the author's friends; for everyone else it doesn't exist (404). */
+    @Transactional(readOnly = true)
+    public Post requireVisiblePost(Long postId, Users viewer) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundException("Post not found"));
         boolean visible = post.getAuthor().getId().equals(viewer.getId())
