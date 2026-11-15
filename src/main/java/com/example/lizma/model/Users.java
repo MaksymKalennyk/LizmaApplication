@@ -8,9 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Builder
@@ -24,21 +22,12 @@ public class Users implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
+
+    @Column(nullable = false)
     private String password;
-
-    @OneToMany(mappedBy = "requester")
-    private Set<FriendRequest> sentRequests = new HashSet<>();
-
-    @OneToMany(mappedBy = "recipient")
-    private Set<FriendRequest> receivedRequests = new HashSet<>();
-
-    @OneToMany(mappedBy = "user1")
-    private Set<Friendship> friendships = new HashSet<>();
-
-    @OneToMany(mappedBy = "author")
-    private List<Post> posts;
-
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)

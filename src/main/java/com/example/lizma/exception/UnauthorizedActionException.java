@@ -1,7 +1,9 @@
 package com.example.lizma.exception;
 
-public class UnauthorizedActionException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class UnauthorizedActionException extends ApiException {
     public UnauthorizedActionException(String message) {
-        super(message);
+        super(HttpStatus.FORBIDDEN, message);
     }
 }
