@@ -4,7 +4,7 @@ import com.example.lizma.model.dto.JwtAuthenticationResponse;
 import com.example.lizma.model.dto.SignInRequest;
 import com.example.lizma.model.dto.SignUpRequest;
 import com.example.lizma.service.AuthenticationService;
-import io.swagger.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -1,17 +1,18 @@
 package com.example.lizma.controller;
 
+import com.example.lizma.model.Users;
 import com.example.lizma.service.MusicAccountService;
 import com.example.lizma.service.SpotifyOAuthService;
-import com.example.lizma.service.UserService;
-import io.swagger.oas.annotations.Operation;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -19,7 +20,6 @@ import java.util.Map;
 @RequestMapping("/music")
 public class MusicAccountController {
 
-    private final UserService userService;
     private final MusicAccountService musicAccountService;
     private final SpotifyOAuthService spotifyOAuthService;
 
@@ -28,58 +28,57 @@ public class MusicAccountController {
 
     @Operation(summary = "Get connected providers status for current user")
     @GetMapping("/status")
-    public MusicAccountService.Status status(Principal principal) {
-        return musicAccountService.getStatus(userService.getCurrentUserId(principal));
+    public MusicAccountService.Status status(@AuthenticationPrincipal Users me) {
+        return musicAccountService.getStatus(me.getId());
     }
 
     @Operation(summary = "Exchange Spotify code (PKCE) and connect account")
     @PostMapping("/spotify/exchange")
-    public ResponseEntity<Map<String,String>> spotifyExchange(@RequestBody SpotifyExchangeRequest req,
-                                                              Principal principal) {
-        Long me = userService.getCurrentUserId(principal);
+    public Map<String, String> spotifyExchange(@Valid @RequestBody SpotifyExchangeRequest req,
+                                               @AuthenticationPrincipal Users me) {
         SpotifyOAuthService.ExchangeResult res = spotifyOAuthService.exchangeCode(req.getCode(), req.getCodeVerifier());
-        musicAccountService.connectSpotify(me, res.accessToken(), res.refreshToken(), res.accessTokenExpiresAt());
-        return ResponseEntity.ok(Map.of("message","Spotify connected"));
+        musicAccountService.connectSpotify(me.getId(), res.accessToken(), res.refreshToken(), res.accessTokenExpiresAt());
+        return Map.of("message", "Spotify connected");
     }
 
     @Operation(summary = "Get Apple Music developer token (for MusicKit on device)")
     @GetMapping("/apple/dev-token")
-    public Map<String,String> appleDevToken() {
+    public Map<String, String> appleDevToken() {
         return Map.of("developerToken", appleDevToken);
     }
 
     @Operation(summary = "Get Spotify authorization URL for client login")
     @GetMapping("/spotify/auth-url")
-    public Map<String,String> spotifyAuthUrl() {
+    public Map<String, String> spotifyAuthUrl() {
         return Map.of("authUrl", spotifyOAuthService.getAuthorizeUrl());
-    }
-
-    @Data public static class AppleConnectRequest {
-
-        @NotBlank private String userToken;
-        @NotBlank private String storefront;
     }
 
     @Operation(summary = "Connect Apple Music by saving user token")
     @PostMapping("/apple/connect")
-    public ResponseEntity<Map<String,String>> appleConnect(@RequestBody AppleConnectRequest req, Principal principal) {
-        Long me = userService.getCurrentUserId(principal);
-        musicAccountService.connectApple(me, req.getUserToken(), req.getStorefront());
-        return ResponseEntity.ok(Map.of("message","Apple Music connected"));
+    public Map<String, String> appleConnect(@Valid @RequestBody AppleConnectRequest req, @AuthenticationPrincipal Users me) {
+        musicAccountService.connectApple(me.getId(), req.getUserToken(), req.getStorefront());
+        return Map.of("message", "Apple Music connected");
+    }
+
+    @Operation(summary = "Search Spotify tracks (requires a connected Spotify account)")
+    @GetMapping("/search")
+    public JsonNode searchSpotify(@RequestParam String query, @AuthenticationPrincipal Users me) {
+        return musicAccountService.searchSpotify(me.getId(), query);
     }
 
     @Data
     public static class SpotifyExchangeRequest {
-        @NotBlank private String code;
-        @NotBlank private String codeVerifier;
+        @NotBlank(message = "code is required")
+        private String code;
+        @NotBlank(message = "codeVerifier is required")
+        private String codeVerifier;
     }
 
-    @Operation(summary = "Search Spotify tracks")
-    @GetMapping("/search")
-    public ResponseEntity<com.fasterxml.jackson.databind.JsonNode> searchSpotify(
-            @RequestParam String query,
-            Principal principal) {
-        Long me = userService.getCurrentUserId(principal);
-        return ResponseEntity.ok(musicAccountService.searchSpotify(me, query));
+    @Data
+    public static class AppleConnectRequest {
+        @NotBlank(message = "userToken is required")
+        private String userToken;
+        @NotBlank(message = "storefront is required")
+        private String storefront;
     }
 }

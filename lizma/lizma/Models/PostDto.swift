@@ -12,7 +12,7 @@ struct PostResponse: Codable, Identifiable {
     let createdAt: String
     let caption: String?
     var reactionsCount: [String: Int]
-    let commentsCount: Int
+    var commentsCount: Int
     var currentUserReaction: String?
 
     enum CodingKeys: String, CodingKey {

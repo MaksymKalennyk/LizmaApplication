@@ -1,227 +1,186 @@
 package com.example.lizma.service;
 
-import com.example.lizma.model.Friendship;
+import com.example.lizma.exception.InvalidActionException;
+import com.example.lizma.exception.NotFoundException;
+import com.example.lizma.exception.UnauthorizedActionException;
 import com.example.lizma.model.Post;
+import com.example.lizma.model.PostComment;
 import com.example.lizma.model.PostReaction;
 import com.example.lizma.model.Users;
+import com.example.lizma.model.dto.CommentRequest;
 import com.example.lizma.model.dto.CommentResponse;
 import com.example.lizma.model.dto.PostRequest;
 import com.example.lizma.model.dto.PostResponse;
-import com.example.lizma.model.enums.FriendshipStatus;
-import com.example.lizma.repo.FriendshipRepository;
+import com.example.lizma.model.dto.ReactionDetailResponse;
 import com.example.lizma.repo.PostCommentRepository;
 import com.example.lizma.repo.PostReactionRepository;
 import com.example.lizma.repo.PostRepository;
-import com.example.lizma.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PostService {
 
+    private static final int MAX_PAGE_SIZE = 50;
+    /** Length of the post_reactions.reaction_type column. */
+    private static final int MAX_REACTION_LENGTH = 16;
+    private static final String DEFAULT_REACTION = "❤️";
+
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
-    private final FriendshipRepository friendshipRepository;
     private final PostReactionRepository reactionRepository;
     private final PostCommentRepository commentRepository;
+    private final UserService userService;
+    private final FriendshipService friendshipService;
 
     public PostResponse createPost(Long authorId, PostRequest request) {
-        Users author = userRepository.findById(authorId).orElseThrow(() -> new RuntimeException("User not found"));
-
+        Users author = userService.getById(authorId);
         Post post = Post.builder()
                 .author(author)
-                .musicId(request.getMusicId())
+                .musicId(request.getMusicId().strip())
                 .musicProvider(request.getMusicProvider())
-                .trackName(request.getTrackName())
-                .artistName(request.getArtistName())
-                .albumCoverUrl(request.getAlbumCoverUrl())
-                .caption(request.getCaption())
+                .trackName(request.getTrackName().strip())
+                .artistName(request.getArtistName().strip())
+                .albumCoverUrl(blankToNull(request.getAlbumCoverUrl()))
+                .caption(blankToNull(request.getCaption()))
                 .build();
-
-        Post saved = postRepository.save(post);
-        return mapToResponse(saved, author);
+        return toResponse(postRepository.save(post), author);
     }
 
+    /** Posts of the user's friends and the user's own posts, newest first. */
+    @Transactional(readOnly = true)
     public List<PostResponse> getFeed(Long userId, int page, int size) {
-        Users currentUser = userRepository.findById(userId).orElseThrow();
+        Users viewer = userService.getById(userId);
+        List<Users> authors = new ArrayList<>(friendshipService.getFriends(viewer));
+        authors.add(viewer);
 
-        // Find friends
-        List<Friendship> friendships = friendshipRepository.findByUser1AndStatusOrUser2AndStatus(
-                currentUser, FriendshipStatus.CONFIRMED,
-                currentUser, FriendshipStatus.CONFIRMED
-        );
-
-        List<Users> friends = new ArrayList<>();
-        for (Friendship f : friendships) {
-            if (f.getUser1().equals(currentUser)) {
-                friends.add(f.getUser2());
-            } else {
-                friends.add(f.getUser1());
-            }
-        }
-        
-        // Include self
-        friends.add(currentUser);
-
-        List<Post> posts = postRepository.findByAuthorInOrderByCreatedAtDesc(friends, PageRequest.of(page, size));
-        return posts.stream().map(p -> mapToResponse(p, currentUser)).collect(Collectors.toList());
+        var pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, MAX_PAGE_SIZE));
+        return postRepository.findByAuthorInOrderByCreatedAtDesc(authors, pageable).stream()
+                .map(post -> toResponse(post, viewer))
+                .toList();
     }
 
+    /** Same emoji again removes the reaction, a different one replaces it. */
     public void reactToPost(Long userId, Long postId, String type) {
-        Users u = userRepository.findById(userId).orElseThrow();
-        Post p = postRepository.findById(postId).orElseThrow();
-
-        if (u.getId().equals(p.getAuthor().getId())) {
-            throw new IllegalArgumentException("Cannot react to your own post");
+        Users user = userService.getById(userId);
+        Post post = getVisiblePost(postId, user);
+        if (post.getAuthor().getId().equals(user.getId())) {
+            throw new InvalidActionException("You can't react to your own post");
         }
+        String reaction = normalizeReaction(type);
 
-        reactionRepository.findByPostAndUser(p, u).ifPresentOrElse(
+        reactionRepository.findByPostAndUser(post, user).ifPresentOrElse(
                 existing -> {
-                    if (existing.getType().equals(type)) {
-                        // User clicked the same emoji -> remove it
+                    if (reaction.equals(reactionType(existing))) {
                         reactionRepository.delete(existing);
                     } else {
-                        // User changed emoji
-                        existing.setType(type);
-                        reactionRepository.save(existing);
+                        existing.setType(reaction);
                     }
                 },
-                () -> reactionRepository.save(PostReaction.builder().post(p).user(u).type(type).build())
+                () -> reactionRepository.save(PostReaction.builder().post(post).user(user).type(reaction).build())
         );
     }
 
-    public CommentResponse addComment(Long userId, Long postId, com.example.lizma.model.dto.CommentRequest req) {
-        Users u = userRepository.findById(userId).orElseThrow();
-        Post p = postRepository.findById(postId).orElseThrow();
-        
-        com.example.lizma.model.PostComment parent = null;
-        if (req.getParentId() != null) {
-            parent = commentRepository.findById(req.getParentId()).orElseThrow(() -> new IllegalArgumentException("Parent comment not found"));
-            if (!parent.getPost().getId().equals(postId)) {
-                throw new IllegalArgumentException("Parent comment does not belong to this post");
-            }
+    public CommentResponse addComment(Long userId, Long postId, CommentRequest request) {
+        Users author = userService.getById(userId);
+        Post post = getVisiblePost(postId, author);
+
+        PostComment parent = null;
+        if (request.getParentId() != null) {
+            parent = commentRepository.findById(request.getParentId())
+                    .filter(comment -> comment.getPost().getId().equals(post.getId()))
+                    .orElseThrow(() -> new NotFoundException("Parent comment not found"));
+            // Replies are one level deep: answering a reply puts the answer under the same top-level comment.
+            parent = topLevel(parent);
         }
-        
-        com.example.lizma.model.PostComment comment = com.example.lizma.model.PostComment.builder()
-                .post(p)
-                .author(u)
-                .content(req.getContent())
+
+        PostComment saved = commentRepository.save(PostComment.builder()
+                .post(post)
+                .author(author)
+                .content(request.getContent().strip())
                 .parentComment(parent)
-                .build();
-                
-        com.example.lizma.model.PostComment saved = commentRepository.save(comment);
-        return CommentResponse.builder()
-                .id(saved.getId())
-                .authorId(u.getId())
-                .authorUsername(u.getUsername())
-                .content(saved.getContent())
-                .createdAt(saved.getCreatedAt())
-                .parentId(parent != null ? parent.getId() : null)
-                .likesCount(0)
-                .isLikedByCurrentUser(false)
-                .replies(new java.util.ArrayList<>())
-                .build();
+                .build());
+        return toCommentResponse(saved, author.getId(), List.of());
     }
 
-    public List<CommentResponse> getComments(Long postId, Long currentUserId) {
-        Post p = postRepository.findById(postId).orElseThrow();
-        List<com.example.lizma.model.PostComment> allComments = commentRepository.findByPostOrderByCreatedAtAsc(p);
-        
-        java.util.Map<Long, List<com.example.lizma.model.PostComment>> repliesMap = allComments.stream()
-            .filter(c -> c.getParentComment() != null)
-            .collect(Collectors.groupingBy(c -> c.getParentComment().getId()));
+    @Transactional(readOnly = true)
+    public List<CommentResponse> getComments(Long postId, Long userId) {
+        Users viewer = userService.getById(userId);
+        Post post = getVisiblePost(postId, viewer);
+        List<PostComment> comments = commentRepository.findByPostOrderByCreatedAtAsc(post);
 
-        return allComments.stream()
-            .filter(c -> c.getParentComment() == null)
-            .map(c -> mapCommentToResponse(c, currentUserId, repliesMap))
-            .collect(Collectors.toList());
+        Map<Long, List<PostComment>> repliesByThread = comments.stream()
+                .filter(comment -> comment.getParentComment() != null)
+                .collect(Collectors.groupingBy(comment -> topLevel(comment).getId()));
+
+        return comments.stream()
+                .filter(comment -> comment.getParentComment() == null)
+                .map(comment -> toCommentResponse(comment, viewer.getId(),
+                        repliesByThread.getOrDefault(comment.getId(), List.of()).stream()
+                                .map(reply -> toCommentResponse(reply, viewer.getId(), List.of()))
+                                .toList()))
+                .toList();
     }
 
-    private CommentResponse mapCommentToResponse(com.example.lizma.model.PostComment c, Long currentUserId, java.util.Map<Long, List<com.example.lizma.model.PostComment>> repliesMap) {
-        boolean isLiked = currentUserId != null && c.getLikedByUsers().stream().anyMatch(u -> u.getId().equals(currentUserId));
-        
-        List<CommentResponse> replies = repliesMap.getOrDefault(c.getId(), new java.util.ArrayList<>())
-            .stream()
-            // Map replies (not going deeper than 1 level for now to keep it simple and flat like IG)
-            .map(r -> {
-                boolean rIsLiked = currentUserId != null && r.getLikedByUsers().stream().anyMatch(u -> u.getId().equals(currentUserId));
-                return CommentResponse.builder()
-                    .id(r.getId())
-                    .authorId(r.getAuthor().getId())
-                    .authorUsername(r.getAuthor().getUsername())
-                    .content(r.getContent())
-                    .createdAt(r.getCreatedAt())
-                    .parentId(c.getId())
-                    .likesCount(r.getLikedByUsers().size())
-                    .isLikedByCurrentUser(rIsLiked)
-                    .replies(new java.util.ArrayList<>()) // Replies don't have replies
-                    .build();
-            })
-            .collect(Collectors.toList());
+    public void toggleLikeComment(Long userId, Long postId, Long commentId) {
+        Users user = userService.getById(userId);
+        PostComment comment = commentRepository.findById(commentId)
+                .filter(c -> c.getPost().getId().equals(postId))
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
+        getVisiblePost(postId, user);
 
-        return CommentResponse.builder()
-            .id(c.getId())
-            .authorId(c.getAuthor().getId())
-            .authorUsername(c.getAuthor().getUsername())
-            .content(c.getContent())
-            .createdAt(c.getCreatedAt())
-            .parentId(null)
-            .likesCount(c.getLikedByUsers().size())
-            .isLikedByCurrentUser(isLiked)
-            .replies(replies)
-            .build();
-    }
-
-    public void toggleLikeComment(Long userId, Long commentId) {
-        Users u = userRepository.findById(userId).orElseThrow();
-        com.example.lizma.model.PostComment c = commentRepository.findById(commentId).orElseThrow();
-        
-        if (c.getLikedByUsers().contains(u)) {
-            c.getLikedByUsers().remove(u);
-        } else {
-            c.getLikedByUsers().add(u);
+        boolean unliked = comment.getLikedByUsers().removeIf(u -> u.getId().equals(user.getId()));
+        if (!unliked) {
+            comment.getLikedByUsers().add(user);
         }
-        commentRepository.save(c);
     }
 
-    public List<com.example.lizma.model.dto.ReactionDetailResponse> getReactions(Long userId, Long postId) {
-        Post p = postRepository.findById(postId).orElseThrow();
-        
-        if (!p.getAuthor().getId().equals(userId)) {
-            throw new org.springframework.security.access.AccessDeniedException("Only the author can view reaction details");
+    @Transactional(readOnly = true)
+    public List<ReactionDetailResponse> getReactions(Long userId, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post not found"));
+        if (!post.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedActionException("Only the author can see who reacted");
         }
-        
-        return reactionRepository.findByPost(p).stream().map(r ->
-            com.example.lizma.model.dto.ReactionDetailResponse.builder()
-                .authorId(r.getUser().getId())
-                .authorUsername(r.getUser().getUsername())
-                .type(r.getType())
-                .createdAt(r.getCreatedAt())
-                .build()
-        ).collect(Collectors.toList());
+        return reactionRepository.findByPost(post).stream()
+                .map(reaction -> ReactionDetailResponse.builder()
+                        .authorId(reaction.getUser().getId())
+                        .authorUsername(reaction.getUser().getUsername())
+                        .type(reactionType(reaction))
+                        .createdAt(reaction.getCreatedAt())
+                        .build())
+                .toList();
     }
 
-    private PostResponse mapToResponse(Post post, Users currentUser) {
+    /** A post is visible to its author and the author's friends; for everyone else it doesn't exist. */
+    private Post getVisiblePost(Long postId, Users viewer) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post not found"));
+        boolean visible = post.getAuthor().getId().equals(viewer.getId())
+                || friendshipService.areFriends(post.getAuthor(), viewer);
+        if (!visible) {
+            throw new NotFoundException("Post not found");
+        }
+        return post;
+    }
+
+    private PostResponse toResponse(Post post, Users viewer) {
         List<PostReaction> reactions = reactionRepository.findByPost(post);
-        java.util.Map<String, Long> reactionCounts = reactions.stream()
-                .collect(Collectors.groupingBy(r -> r.getType() != null ? r.getType() : "❤️", Collectors.counting()));
-                
-        long comments = commentRepository.countByPost(post);
-        
-        String myReaction = null;
-        if (currentUser != null) {
-            myReaction = reactions.stream()
-                .filter(r -> r.getUser().getId().equals(currentUser.getId()))
-                .map(r -> r.getType() != null ? r.getType() : "❤️")
+        Map<String, Long> reactionCounts = reactions.stream()
+                .collect(Collectors.groupingBy(PostService::reactionType, Collectors.counting()));
+        String viewerReaction = reactions.stream()
+                .filter(reaction -> reaction.getUser().getId().equals(viewer.getId()))
+                .map(PostService::reactionType)
                 .findFirst()
                 .orElse(null);
-        }
 
         return PostResponse.builder()
                 .id(post.getId())
@@ -235,8 +194,50 @@ public class PostService {
                 .createdAt(post.getCreatedAt())
                 .caption(post.getCaption())
                 .reactionsCount(reactionCounts)
-                .commentsCount(comments)
-                .currentUserReaction(myReaction)
+                .commentsCount(commentRepository.countByPost(post))
+                .currentUserReaction(viewerReaction)
                 .build();
+    }
+
+    private CommentResponse toCommentResponse(PostComment comment, Long viewerId, List<CommentResponse> replies) {
+        return CommentResponse.builder()
+                .id(comment.getId())
+                .authorId(comment.getAuthor().getId())
+                .authorUsername(comment.getAuthor().getUsername())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .parentId(comment.getParentComment() == null ? null : topLevel(comment).getId())
+                .likesCount(comment.getLikedByUsers().size())
+                .isLikedByCurrentUser(comment.getLikedByUsers().stream().anyMatch(u -> u.getId().equals(viewerId)))
+                .replies(replies)
+                .build();
+    }
+
+    /** The top-level comment of a thread (the comment itself if it has no parent). */
+    private static PostComment topLevel(PostComment comment) {
+        PostComment current = comment;
+        while (current.getParentComment() != null) {
+            current = current.getParentComment();
+        }
+        return current;
+    }
+
+    private static String reactionType(PostReaction reaction) {
+        return reaction.getType() != null ? reaction.getType() : DEFAULT_REACTION;
+    }
+
+    private static String normalizeReaction(String type) {
+        if (type == null || type.isBlank()) {
+            throw new InvalidActionException("Reaction must not be empty");
+        }
+        String reaction = type.strip();
+        if (reaction.codePointCount(0, reaction.length()) > MAX_REACTION_LENGTH) {
+            throw new InvalidActionException("Reaction is too long");
+        }
+        return reaction;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 }

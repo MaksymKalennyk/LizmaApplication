@@ -3,23 +3,29 @@ package com.example.lizma.model.dto;
 import com.example.lizma.model.enums.MusicProvider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class PostRequest {
-    @NotBlank
+    @NotBlank(message = "Track id is required")
+    @Size(max = 255, message = "Track id is too long")
     private String musicId;
 
-    @NotNull
+    @NotNull(message = "Music provider is required")
     private MusicProvider musicProvider;
 
-    @NotBlank
+    @NotBlank(message = "Track name is required")
+    @Size(max = 255, message = "Track name is too long")
     private String trackName;
 
-    @NotBlank
+    @NotBlank(message = "Artist name is required")
+    @Size(max = 255, message = "Artist name is too long")
     private String artistName;
 
+    @Size(max = 512, message = "Album cover URL is too long")
     private String albumCoverUrl;
 
+    @Size(max = 1024, message = "Caption must be at most 1024 characters")
     private String caption;
 }

@@ -2,16 +2,12 @@ package com.example.lizma.controller;
 
 import com.example.lizma.model.Users;
 import com.example.lizma.model.dto.InviteLinkDto;
-import com.example.lizma.repo.UserRepository;
-import com.example.lizma.service.FriendshipService;
-import com.example.lizma.service.UserService;
-import io.swagger.oas.annotations.Operation;
+import com.example.lizma.service.FriendInviteService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -19,27 +15,21 @@ import java.util.Map;
 @RequestMapping("/user/friend-invites")
 public class FriendInviteController {
 
-    private final UserService userService;
-    private final UserRepository userRepository;
-    private final FriendshipService friendshipService;
+    private final FriendInviteService inviteService;
 
-    @Value("${app.externalBaseUrl}")
-    private String externalBaseUrl;
-
-    @Operation(summary = "Create vanity invite link by username")
-    @PostMapping("/vanity-link")
-    public InviteLinkDto createVanity(Principal principal) {
-        Long me = userService.getCurrentUserId(principal);
-        Users u = userRepository.findById(me).orElseThrow();
-        return new InviteLinkDto(null, externalBaseUrl + "/" + u.getUsername(), null);
+    @Operation(summary = "Create a new single-use invite link (valid for app.invites.ttlHours)")
+    @PostMapping
+    public InviteLinkDto createInvite(@AuthenticationPrincipal Users me) {
+        return inviteService.createInvite(me.getId());
     }
 
-    @Operation(summary = "Accept invite by requester's username (auth required)")
-    @PostMapping("/accept-by-username/{username}")
-    public ResponseEntity<Map<String, String>> acceptByUsername(@PathVariable String username, Principal principal) {
-        Long me = userService.getCurrentUserId(principal);
-        Users requester = userRepository.findByUsername(username).orElseThrow();
-        friendshipService.ensureFriendship(requester.getId(), me);
-        return ResponseEntity.ok(Map.of("message", "Friendship established"));
+    @Operation(summary = "Accept an invite link: become friends with the person who shared it")
+    @PostMapping("/{token}/accept")
+    public Map<String, String> acceptInvite(@PathVariable String token, @AuthenticationPrincipal Users me) {
+        String message = switch (inviteService.acceptInvite(token, me.getId())) {
+            case BECAME_FRIENDS -> "Friendship established";
+            case ALREADY_FRIENDS -> "You are already friends";
+        };
+        return Map.of("message", message);
     }
 }
