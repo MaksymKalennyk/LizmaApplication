@@ -7,7 +7,7 @@ struct ReactionListView: View {
     @State private var errorMessage: String? = nil
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if isLoading && reactions.isEmpty {
                     ProgressView()
@@ -66,7 +66,9 @@ struct ReactionListView: View {
         do {
             reactions = try await PostService.shared.getReactions(postId: postId)
         } catch {
-            errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                errorMessage = error.userMessage
+            }
         }
         isLoading = false
     }

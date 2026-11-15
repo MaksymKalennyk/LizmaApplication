@@ -1,0 +1,28 @@
+# Local MySQL for Lizma.
+# Values come from .env (copy .env.example to .env and fill it in).
+#   docker compose up -d     - start the database
+#   docker compose down      - stop it (data is kept in the volume)
+name: lizma
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lizma-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  mysql-data:

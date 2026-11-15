@@ -1,75 +1,97 @@
 package com.example.lizma.exception;
 
+import com.example.lizma.model.dto.ApiError;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * Every error leaves the API as {@code {"message": "..."}} with a meaningful status code.
+ * Spring MVC errors (unknown path, wrong method, malformed JSON, bad parameters, validation)
+ * are handled by {@link ResponseEntityExceptionHandler} and reshaped in {@link #createResponseEntity}.
+ */
+@Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(FriendRequestNotFoundException.class)
-    public ResponseEntity<String> handleFriendRequestNotFound(FriendRequestNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(FriendRequestAlreadyExistsException.class)
-    public ResponseEntity<String> handleFriendRequestAlreadyExists(FriendRequestAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(FriendRequestAlreadyProcessedException.class)
-    public ResponseEntity<String> handleFriendRequestAlreadyProcessed(FriendRequestAlreadyProcessedException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(UnauthorizedActionException.class)
-    public ResponseEntity<String> handleUnauthorizedAction(UnauthorizedActionException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(InvalidActionException.class)
-    public ResponseEntity<String> handleInvalidAction(InvalidActionException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(InvalidLinkException.class)
-    public ResponseEntity<String> handleInvalidLinkException(InvalidLinkException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiError> handleApiException(ApiException ex) {
+        return error(ex.getStatus(), ex.getMessage());
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, Object>> handleRSE(ResponseStatusException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("message", ex.getReason() != null ? ex.getReason() : "Error");
-        return ResponseEntity.status(ex.getStatusCode()).body(body);
+    public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException ex) {
+        return error(ex.getStatusCode(), ex.getReason() != null ? ex.getReason() : "Error");
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        String msg = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(err -> err.getDefaultMessage())
-                .orElse("Validation error");
-        Map<String, Object> body = new HashMap<>();
-        body.put("message", msg);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+        return error(HttpStatus.FORBIDDEN, "Access denied");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
+        return error(HttpStatus.CONFLICT, "The request conflicts with existing data");
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("message", "Server error");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
+        log.error("Unhandled exception", ex);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Server error");
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
+                                                                  HttpStatusCode status, WebRequest request) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(FieldError::getDefaultMessage)
+                .orElse("Validation error");
+        return new ResponseEntity<>(new ApiError(message), headers, status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers,
+                                                                  HttpStatusCode status, WebRequest request) {
+        String message = "Malformed request body";
+        if (ex.getCause() instanceof InvalidFormatException invalid && !invalid.getPath().isEmpty()) {
+            String field = invalid.getPath().get(invalid.getPath().size() - 1).getFieldName();
+            message = "Invalid value for field '" + field + "'";
+        }
+        return new ResponseEntity<>(new ApiError(message), headers, status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> createResponseEntity(Object body, HttpHeaders headers,
+                                                          HttpStatusCode statusCode, WebRequest request) {
+        String message;
+        if (statusCode.value() == HttpStatus.NOT_FOUND.value()) {
+            message = "Not found";
+        } else if (body instanceof ProblemDetail problem && problem.getDetail() != null) {
+            message = problem.getDetail();
+        } else {
+            HttpStatus status = HttpStatus.resolve(statusCode.value());
+            message = status != null ? status.getReasonPhrase() : "Error";
+        }
+        return new ResponseEntity<>(new ApiError(message), headers, statusCode);
+    }
+
+    private static ResponseEntity<ApiError> error(HttpStatusCode status, String message) {
+        return ResponseEntity.status(status).body(new ApiError(message));
     }
 }
