@@ -1,20 +1,20 @@
 import SwiftUI
 
 struct ConnectMusicBanner: View {
-    @State private var status = ProvidersStatus(spotifyConnected: false, appleConnected: false)
+    @ObservedObject private var musicStatus = MusicStatusStore.shared
     @State private var showConnect = false
 
     var body: some View {
         Group {
-            if !(status.spotifyConnected || status.appleConnected) {
+            if musicStatus.isLoaded && !musicStatus.status.spotifyConnected {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Connect a music service").font(.headline)
-                    Text("Link Spotify or Apple Music to post and listen to full tracks.")
+                    Text("Link your Spotify account to search tracks and share them with friends.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Button {
                         showConnect = true
                     } label: {
-                        Label("Connect now", systemImage: "link")
+                        Label("Connect Spotify to search tracks", systemImage: "link")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
                             .background(Capsule().fill(.tint))
@@ -26,11 +26,20 @@ struct ConnectMusicBanner: View {
                 .padding(.horizontal)
             }
         }
-        .sheet(isPresented: $showConnect) {
-            NavigationStack { MusicConnectView() }
+        .sheet(isPresented: $showConnect, onDismiss: {
+            Task { await musicStatus.refresh() }
+        }) {
+            NavigationStack {
+                MusicConnectView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showConnect = false }
+                        }
+                    }
+            }
         }
         .task {
-            if let s = try? await MusicService.shared.status() { status = s }
+            await musicStatus.refreshIfNeeded()
         }
     }
 }

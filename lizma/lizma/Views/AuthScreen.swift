@@ -13,8 +13,6 @@ struct AuthScreen: View {
     @State private var passwordTouched = false
     @State private var didSubmit = false
 
-    private let usernameMin = 5
-    private let usernameMax = 50
     private let passwordMin = 8
     private let passwordMax = 255
 
@@ -45,8 +43,8 @@ struct AuthScreen: View {
                                         .stroke(shouldShowUsernameErrorBorder ? Color.red.opacity(0.6) : .clear, lineWidth: 1)
                                 )
                         )
-                        .onChange(of: auth.username) { _ in validate() }
-                        .onChange(of: usernameFocused) { focused in
+                        .onChange(of: auth.username) { validate() }
+                        .onChange(of: usernameFocused) { _, focused in
                             if focused { usernameTouched = true }
                         }
 
@@ -67,8 +65,8 @@ struct AuthScreen: View {
                                         .stroke(shouldShowPasswordErrorBorder ? Color.red.opacity(0.6) : .clear, lineWidth: 1)
                                 )
                         )
-                        .onChange(of: auth.password) { _ in validate() }
-                        .onChange(of: passwordFocused) { focused in
+                        .onChange(of: auth.password) { validate() }
+                        .onChange(of: passwordFocused) { _, focused in
                             if focused { passwordTouched = true }
                         }
 
@@ -103,7 +101,10 @@ struct AuthScreen: View {
             .disabled(auth.isLoading || usernameError != nil || passwordError != nil)
 
             Button(isSignIn ? "No account? Sign up" : "Already have an account? Sign in") {
+                // A server error belongs to the other mode's attempt.
+                auth.error = nil
                 withAnimation { isSignIn.toggle() }
+                validate()
             }
             .padding(.top, 4)
 
@@ -113,7 +114,8 @@ struct AuthScreen: View {
         }
         .onAppear { validate() }
         .background(
-            LinearGradient(gradient: Gradient(colors: [.init(white: 0.95), .white]),
+            // System colors keep the soft gradient in light mode and stay readable in dark mode.
+            LinearGradient(colors: [Color(.secondarySystemBackground), Color(.systemBackground)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             .ignoresSafeArea()
         )
@@ -136,8 +138,11 @@ struct AuthScreen: View {
         let u = auth.username.trimmingCharacters(in: .whitespacesAndNewlines)
         if u.isEmpty {
             usernameError = "Username cannot be blank"
-        } else if u.count < usernameMin || u.count > usernameMax {
-            usernameError = "Username must be between \(usernameMin) and \(usernameMax) characters"
+        } else if !UsernameValidator.lengthRange.contains(u.count) {
+            usernameError = UsernameValidator.lengthMessage
+        } else if !isSignIn && !UsernameValidator.hasOnlyAllowedCharacters(u) {
+            // Only enforced for new accounts: older usernames may predate the rule and must still sign in.
+            usernameError = UsernameValidator.charactersMessage
         } else {
             usernameError = nil
         }

@@ -60,17 +60,21 @@ actor MusicService {
             throw NSError(domain: "MusicService", code: 10, userInfo: [NSLocalizedDescriptionKey: "Bad callback url"])
         }
 
-        var receivedCode: String?
-        var receivedState: String?
+        let items = components.queryItems ?? []
+        func value(_ name: String) -> String? { items.first(where: { $0.name == name })?.value }
 
-        components.queryItems?.forEach { item in
-            if item.name == "code" { receivedCode = item.value }
-            if item.name == "state" { receivedState = item.value }
-            if item.name == "error" {
-                
-                receivedCode = nil
-            }
+        // Spotify redirects with `error=...` instead of a code when the user declines or something fails.
+        if let authError = value("error") {
+            spotifyCodeVerifier = nil
+            spotifyState = nil
+            let message = authError == "access_denied"
+                ? "Spotify access was denied"
+                : "Spotify authorization failed (\(authError))"
+            throw NSError(domain: "MusicService", code: 14, userInfo: [NSLocalizedDescriptionKey: message])
         }
+
+        let receivedCode = value("code")
+        let receivedState = value("state")
 
         guard let code = receivedCode else {
             throw NSError(domain: "MusicService", code: 11, userInfo: [NSLocalizedDescriptionKey: "No authorization code"])
@@ -111,8 +115,9 @@ actor MusicService {
     }
     
     func searchSpotify(query: String) async throws -> [SpotifyTrack] {
-        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return [] }
-        return try await APIClient.shared.send([SpotifyTrack].self, path: "/music/search?query=\(encodedQuery)")
+        try await APIClient.shared.send([SpotifyTrack].self,
+                                        path: "/music/search",
+                                        query: [URLQueryItem(name: "query", value: query)])
     }
 
 

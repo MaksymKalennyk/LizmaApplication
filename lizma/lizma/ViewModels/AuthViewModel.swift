@@ -9,18 +9,36 @@ final class AuthViewModel: ObservableObject {
     @Published var error: String? = nil
     @Published var isSignedIn = AuthService.shared.isSignedIn
 
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        // APIClient posts this when the server rejects our token (e.g. it expired).
+        NotificationCenter.default.publisher(for: .sessionExpired)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.handleSessionExpired() }
+            .store(in: &cancellables)
+    }
+
     func signIn() async {
-        await auth(action: { try await AuthService.shared.signIn(username: self.username, password: self.password) })
+        let username = trimmedUsername
+        await auth(action: { try await AuthService.shared.signIn(username: username, password: self.password) })
     }
 
     func signUp() async {
-        await auth(action: { try await AuthService.shared.signUp(username: self.username, password: self.password) })
+        let username = trimmedUsername
+        await auth(action: { try await AuthService.shared.signUp(username: username, password: self.password) })
+    }
+
+    /// What the user typed, without stray spaces/newlines (validation checks the same trimmed value).
+    private var trimmedUsername: String {
+        username.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func auth(action: @escaping () async throws -> Void) async {
         error = nil; isLoading = true
         do {
             try await action()
+            password = ""
             isSignedIn = true
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -30,6 +48,23 @@ final class AuthViewModel: ObservableObject {
 
     func signOut() {
         AuthService.shared.signOut()
+        MusicStatusStore.shared.reset()
+        resetForm()
         isSignedIn = false
+    }
+
+    private func handleSessionExpired() {
+        guard isSignedIn else { return }
+        MusicStatusStore.shared.reset()
+        resetForm()
+        isSignedIn = false
+        error = "Session expired, please sign in again"
+    }
+
+    private func resetForm() {
+        username = ""
+        password = ""
+        error = nil
+        isLoading = false
     }
 }
