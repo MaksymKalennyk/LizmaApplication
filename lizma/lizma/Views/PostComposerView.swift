@@ -1,133 +1,31 @@
 import SwiftUI
 
 struct PostComposerView: View {
+    @Binding var selectedTab: Int
+    @ObservedObject private var musicStatus = MusicStatusStore.shared
+
     @State private var text: String = ""
     @State private var searchQuery: String = ""
     @State private var searchResults: [SpotifyTrack] = []
     @State private var selectedTrack: SpotifyTrack? = nil
-    
+
     @State private var submitting = false
     @State private var isSearching = false
-    @State private var showConnect = false
-    @State private var status = ProvidersStatus(spotifyConnected: false, appleConnected: false)
+    /// True once a search finished for the current query (to tell "no results" from "not searched yet").
+    @State private var hasSearched = false
 
     @State private var errorMessage: String? = nil
-    
-    @Binding var selectedTab: Int
     @State private var searchTask: Task<Void, Never>? = nil
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                if !(status.spotifyConnected || status.appleConnected) {
-                    ConnectMusicBanner()
-                        .padding()
-                }
-
-                if let track = selectedTrack {
-                    
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack(spacing: 12) {
-                                if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
-                                    AsyncImage(url: url) { image in
-                                        image.resizable().aspectRatio(contentMode: .fill)
-                                    } placeholder: {
-                                        Color.gray.opacity(0.3)
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .cornerRadius(8)
-                                } else {
-                                    Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 80, height: 80).cornerRadius(8)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(track.name).font(.headline).lineLimit(2)
-                                    Text(track.artists.map { $0.name }.joined(separator: ", "))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(1)
-                                }
-                                
-                                Spacer()
-                                
-                                Button {
-                                    selectedTrack = nil
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
-
-                            TextField("Add a caption (optional)", text: $text, axis: .vertical)
-                                .lineLimit(3...8)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
-                        }
-                        .padding()
-                    }
-                } else {
-                    
-                    VStack {
-                        HStack {
-                            Image(systemName: "magnifyingglass").foregroundColor(.gray)
-                            TextField("Search for a track...", text: $searchQuery)
-                                .autocorrectionDisabled()
-                                .onChange(of: searchQuery) { newValue in
-                                    searchTask?.cancel()
-                                    searchTask = Task {
-                                        do {
-                                            try await Task.sleep(nanoseconds: 500_000_000) 
-                                        } catch { return }
-                                        if !Task.isCancelled {
-                                            await search()
-                                        }
-                                    }
-                                }
-                        }
-                        .padding(10)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray6)))
-                        .padding()
-
-                        if isSearching {
-                            ProgressView().padding()
-                        }
-                        
-                        List(searchResults) { track in
-                            Button {
-                                selectedTrack = track
-                            } label: {
-                                HStack {
-                                    if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
-                                        AsyncImage(url: url) { image in
-                                            image.resizable().aspectRatio(contentMode: .fill)
-                                        } placeholder: {
-                                            Color.gray.opacity(0.3)
-                                        }
-                                        .frame(width: 50, height: 50)
-                                        .cornerRadius(4)
-                                    } else {
-                                        Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 50, height: 50).cornerRadius(4)
-                                    }
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(track.name).font(.headline).foregroundColor(.primary)
-                                        Text(track.artists.map { $0.name }.joined(separator: ", "))
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                        .listStyle(.plain)
-                    }
-                }
+                content
 
                 if let errorMessage {
                     Text(errorMessage)
                         .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
                         .padding()
                 }
             }
@@ -136,10 +34,7 @@ struct PostComposerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        text = ""
-                        selectedTrack = nil
-                        searchQuery = ""
-                        searchResults = []
+                        resetComposer()
                         selectedTab = 0
                     }
                 }
@@ -157,68 +52,239 @@ struct PostComposerView: View {
                 }
             }
             .task {
-                do {
-                    status = try await MusicService.shared.status()
-                } catch {
-                    errorMessage = error.localizedDescription
-                }
-            }
-            .sheet(isPresented: $showConnect) {
-                NavigationStack { MusicConnectView() }
+                await musicStatus.refresh()
             }
         }
     }
 
+    // MARK: - Content
 
-    private func search() async {
-        guard !searchQuery.isEmpty else { return }
+    @ViewBuilder
+    private var content: some View {
+        if !musicStatus.isLoaded {
+            if let statusError = musicStatus.errorMessage, !musicStatus.isLoading {
+                statusErrorView(statusError)
+            } else {
+                // Don't guess: no banner or search until we know whether Spotify is connected.
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        } else if !musicStatus.status.spotifyConnected {
+            // Tracks come from Spotify search, so there is nothing to post without it.
+            VStack {
+                ConnectMusicBanner()
+                    .padding(.top)
+                Spacer()
+            }
+        } else if let track = selectedTrack {
+            selectedTrackView(track)
+        } else {
+            searchView
+        }
+    }
+
+    private func statusErrorView(_ message: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 36))
+                .foregroundStyle(.secondary)
+            Text("Couldn't check your music accounts")
+                .font(.headline)
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Button("Retry") {
+                Task { await musicStatus.refresh() }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .multilineTextAlignment(.center)
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func selectedTrackView(_ track: SpotifyTrack) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { image in
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Color.gray.opacity(0.3)
+                        }
+                        .frame(width: 80, height: 80)
+                        .cornerRadius(8)
+                    } else {
+                        Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 80, height: 80).cornerRadius(8)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(track.name).font(.headline).lineLimit(2)
+                        Text(track.artists.map { $0.name }.joined(separator: ", "))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        selectedTrack = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.gray)
+                    }
+                    .accessibilityLabel("Remove selected track")
+                }
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
+
+                TextField("Add a caption (optional)", text: $text, axis: .vertical)
+                    .lineLimit(3...8)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
+            }
+            .padding()
+        }
+    }
+
+    private var searchView: some View {
+        VStack {
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundColor(.gray)
+                TextField("Search for a track...", text: $searchQuery)
+                    .autocorrectionDisabled()
+                    .onChange(of: searchQuery) { _, newValue in
+                        scheduleSearch(for: newValue)
+                    }
+            }
+            .padding(10)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray6)))
+            .padding()
+
+            if isSearching {
+                ProgressView().padding()
+            }
+
+            if searchResults.isEmpty && !isSearching {
+                let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.isEmpty {
+                    ContentUnavailableView(
+                        "Find a track",
+                        systemImage: "music.note",
+                        description: Text("Search Spotify for a song to share with your friends.")
+                    )
+                } else if hasSearched {
+                    ContentUnavailableView.search(text: trimmed)
+                } else {
+                    Spacer()
+                }
+            } else {
+                List(searchResults) { track in
+                    Button {
+                        selectedTrack = track
+                    } label: {
+                        HStack {
+                            if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
+                                AsyncImage(url: url) { image in
+                                    image.resizable().aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Color.gray.opacity(0.3)
+                                }
+                                .frame(width: 50, height: 50)
+                                .cornerRadius(4)
+                            } else {
+                                Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 50, height: 50).cornerRadius(4)
+                            }
+
+                            VStack(alignment: .leading) {
+                                Text(track.name).font(.headline).foregroundColor(.primary)
+                                Text(track.artists.map { $0.name }.joined(separator: ", "))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func scheduleSearch(for query: String) {
+        searchTask?.cancel()
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            searchResults = []
+            isSearching = false
+            hasSearched = false
+            errorMessage = nil
+            return
+        }
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            await search(trimmed)
+        }
+    }
+
+    private func search(_ query: String) async {
         isSearching = true
         errorMessage = nil
         do {
-            searchResults = try await MusicService.shared.searchSpotify(query: searchQuery)
+            let results = try await MusicService.shared.searchSpotify(query: query)
+            guard !Task.isCancelled else { return }
+            searchResults = results
+            hasSearched = true
         } catch {
-            errorMessage = "Search failed: \(error.localizedDescription)"
+            // A newer keystroke cancelled this search: it owns the spinner and the results now.
+            guard !Task.isCancelled, !error.isCancellation else { return }
+            errorMessage = "Search failed: \(error.userMessage)"
+            if case APIError.server(409, _) = error {
+                // e.g. "Spotify account is not connected": show the connect prompt instead.
+                await musicStatus.refresh()
+            }
         }
         isSearching = false
     }
 
     private func submit() async {
-        guard let track = selectedTrack else { return }
-        
-        do {
-            let s = try await MusicService.shared.status()
-            if !(s.spotifyConnected || s.appleConnected) {
-                showConnect = true
-                return
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-            return
-        }
-
+        guard !submitting, let track = selectedTrack else { return }
         submitting = true
         defer { submitting = false }
+        errorMessage = nil
 
+        let caption = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let req = PostRequest(
+            musicId: track.id,
+            musicProvider: "SPOTIFY",
+            trackName: String(track.name.prefix(255)),
+            artistName: String(track.artists.map { $0.name }.joined(separator: ", ").prefix(255)),
+            albumCoverUrl: track.album.images?.first?.url,
+            caption: caption.isEmpty ? nil : caption
+        )
         do {
-            let req = PostRequest(
-                musicId: track.id, 
-                musicProvider: "SPOTIFY",
-                trackName: track.name,
-                artistName: track.artists.map { $0.name }.joined(separator: ", "),
-                albumCoverUrl: track.album.images?.first?.url,
-                caption: text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : text.trimmingCharacters(in: .whitespacesAndNewlines)
-            )
-            let _ = try await PostService.shared.createPost(req)
-
-            text = ""
-            selectedTrack = nil
-            searchQuery = ""
-            searchResults = []
+            _ = try await PostService.shared.createPost(req)
+            resetComposer()
+            NotificationCenter.default.post(name: .postCreated, object: nil)
             selectedTab = 0
-            
         } catch {
-            self.errorMessage = "Failed to post: \(error.localizedDescription)"
+            errorMessage = "Failed to post: \(error.userMessage)"
         }
+    }
+
+    private func resetComposer() {
+        searchTask?.cancel()
+        text = ""
+        selectedTrack = nil
+        searchQuery = ""
+        searchResults = []
+        isSearching = false
+        hasSearched = false
+        errorMessage = nil
     }
 }
 

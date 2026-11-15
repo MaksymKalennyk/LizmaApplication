@@ -6,7 +6,10 @@ final class PostService {
     private init() {}
 
     func getFeed(page: Int = 0, size: Int = 20) async throws -> [PostResponse] {
-        return try await APIClient.shared.send([PostResponse].self, path: "/posts/feed?page=\(page)&size=\(size)")
+        return try await APIClient.shared.send([PostResponse].self,
+                                               path: "/posts/feed",
+                                               query: [URLQueryItem(name: "page", value: String(page)),
+                                                       URLQueryItem(name: "size", value: String(size))])
     }
 
     func createPost(_ req: PostRequest) async throws -> PostResponse {

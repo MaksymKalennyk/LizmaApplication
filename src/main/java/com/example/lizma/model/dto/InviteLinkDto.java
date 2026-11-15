@@ -1,6 +1,6 @@
 package com.example.lizma.model.dto;
 
-import io.swagger.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

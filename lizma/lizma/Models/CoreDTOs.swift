@@ -7,3 +7,8 @@ struct AnyEncodable: Encodable {
 }
 
 struct Empty: Decodable {}
+
+/// `{"message": "..."}` replies, e.g. from accepting an invite.
+struct MessageResponse: Decodable {
+    let message: String
+}

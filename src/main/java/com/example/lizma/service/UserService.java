@@ -1,74 +1,55 @@
 package com.example.lizma.service;
 
+import com.example.lizma.exception.ConflictException;
 import com.example.lizma.exception.UserNotFoundException;
-import com.example.lizma.model.enums.Role;
 import com.example.lizma.model.Users;
 import com.example.lizma.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.PageRequest;
 
-import java.security.Principal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final JwtService jwtService;
+    private static final int DEFAULT_SEARCH_LIMIT = 20;
+    private static final int MAX_SEARCH_LIMIT = 50;
 
-    public Users save(Users users){
-        return userRepository.save(users);
-    }
+    private final UserRepository userRepository;
 
     public Users create(Users user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("A user with this username already exists");
+            throw new ConflictException("Username already taken");
         }
+        return userRepository.save(user);
+    }
 
-        return save(user);
+    public Users getById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     public Users getByUsername(String username) {
         return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+    /** For Spring Security: must throw {@link UsernameNotFoundException} for unknown users. */
+    public UserDetailsService userDetailsService() {
+        return username -> userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
-    public UserDetailsService userDetailsService() {
-        return this::getByUsername;
-    }
-
-    public Users getCurrentUser() {
-        var username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return getByUsername(username);
-    }
-
-    public Long getCurrentUserId(Principal principal) {
-        Users user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-        return user.getId();
-    }
-
-    public Long getUserIdFromToken(String token) {
-        return jwtService.extractUserId(token);
-    }
-
-    public void getAdmin() {
-        var user = getCurrentUser();
-        user.setRole(Role.ROLE_ADMIN);
-        save(user);
-    }
-
-    public java.util.List<Users> searchByUsername(String query, int limit) {
-        int size = (limit <= 0 || limit > 50) ? 20 : limit;
+    public List<Users> searchByUsername(String query, int limit) {
+        int size = (limit <= 0 || limit > MAX_SEARCH_LIMIT) ? DEFAULT_SEARCH_LIMIT : limit;
         return userRepository.findByUsernameContainingIgnoreCase(query, PageRequest.of(0, size));
     }
 
     public boolean usernameExists(String username) {
         return userRepository.existsByUsername(username);
     }
-
 }

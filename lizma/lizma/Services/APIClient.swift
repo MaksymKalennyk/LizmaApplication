@@ -12,17 +12,22 @@ enum APIError: Error, LocalizedError {
         case .invalidURL: return "Invalid URL"
         case .decodingFailed: return "Failed to decode server response"
         case .server(_, let message): return message
-        case .unauthorized: return "Unauthorized. Please sign in again."
+        case .unauthorized: return "Session expired, please sign in again."
         case .unknown: return "Unknown error"
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted when the server no longer accepts the stored token (expired, invalid, or the user is gone).
+    static let sessionExpired = Notification.Name("lizma.sessionExpired")
 }
 
 final class APIClient {
     static let shared = APIClient()
     private init() {}
 
-    private var token: String? { (try? Keychain.get("jwtToken")) }
+    private var token: String? { AuthService.shared.token }
 
     private func makeRequest(path: String,
                              method: String = "GET",
@@ -30,24 +35,26 @@ final class APIClient {
                              body: Encodable? = nil) throws -> URLRequest {
         let normalizedPath = path.hasPrefix("/") ? path : "/" + path
         let fullURLString = AppConfig.apiBaseURL + normalizedPath
-        
+
         guard var components = URLComponents(string: fullURLString) else {
             throw APIError.invalidURL
         }
 
         if !query.isEmpty {
-            var currentQueryItems = components.queryItems ?? []
-            currentQueryItems.append(contentsOf: query)
-            components.queryItems = currentQueryItems.isEmpty ? nil : currentQueryItems
+            components.queryItems = (components.queryItems ?? []) + query
+            // URLComponents escapes "&" and "=" inside values but leaves "+", which servers decode as a space.
+            components.percentEncodedQuery = components.percentEncodedQuery?
+                .replacingOccurrences(of: "+", with: "%2B")
         }
-        
+
         guard let url = components.url else { throw APIError.invalidURL }
 
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        if let token {
+        // Sign-in/sign-up must not carry a (possibly stale) token from a previous session.
+        if !normalizedPath.hasPrefix("/auth/"), let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         if let body = body {
@@ -79,14 +86,24 @@ final class APIClient {
                 }
                 throw APIError.decodingFailed
             }
+            // Callers that don't care about the body: any 2xx (including an empty body) is a success.
             if T.self == Empty.self {
                 return Empty() as! T
+            }
+            if T.self == EmptyResponse.self {
+                return EmptyResponse() as! T
             }
             do {
                 return try JSONDecoder().decode(T.self, from: data)
             } catch {
                 throw APIError.decodingFailed
             }
+
+        case 401 where request.value(forHTTPHeaderField: "Authorization") != nil:
+            // The token we sent was rejected: forget it and send the user back to the sign-in screen.
+            AuthService.shared.signOut()
+            await MainActor.run { NotificationCenter.default.post(name: .sessionExpired, object: nil) }
+            throw APIError.unauthorized
 
         case 401:
             let msg = extractMessage(from: data) ?? "Incorrect username or password"
@@ -128,5 +145,19 @@ final class APIClient {
         case 500: return "Server error"
         default:  return "Error (\(code))"
         }
+    }
+}
+
+extension Error {
+    /// True when a task or its URLSession request was cancelled (typing, leaving a screen): not worth showing.
+    var isCancellation: Bool {
+        if self is CancellationError { return true }
+        if let urlError = self as? URLError, urlError.code == .cancelled { return true }
+        return false
+    }
+
+    /// A message suitable for showing to the user.
+    var userMessage: String {
+        (self as? LocalizedError)?.errorDescription ?? localizedDescription
     }
 }

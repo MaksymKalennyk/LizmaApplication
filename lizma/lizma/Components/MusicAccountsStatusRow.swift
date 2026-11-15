@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct MusicAccountsStatusRow: View {
-    @State private var status = ProvidersStatus(spotifyConnected: false, appleConnected: false)
-    @State private var err: String? = nil
+    @ObservedObject private var musicStatus = MusicStatusStore.shared
 
     var body: some View {
         NavigationLink {
@@ -16,35 +15,39 @@ struct MusicAccountsStatusRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Music Accounts").bold()
 
-                    HStack(spacing: 8) {
-                        HStack(spacing: 4) {
-                            Image(systemName: status.spotifyConnected ? "checkmark.circle.fill" : "xmark.circle")
-                                .foregroundStyle(status.spotifyConnected ? .green : .secondary)
-                            Text("Spotify")
-                        }
+                    if musicStatus.isLoaded {
+                        HStack(spacing: 8) {
+                            HStack(spacing: 4) {
+                                Image(systemName: musicStatus.status.spotifyConnected ? "checkmark.circle.fill" : "xmark.circle")
+                                    .foregroundStyle(musicStatus.status.spotifyConnected ? .green : .secondary)
+                                Text("Spotify")
+                            }
 
-                        HStack(spacing: 4) {
-                            Image(systemName: status.appleConnected ? "checkmark.circle.fill" : "xmark.circle")
-                                .foregroundStyle(status.appleConnected ? .green : .secondary)
-                            Text("Apple Music")
+                            HStack(spacing: 4) {
+                                Image(systemName: musicStatus.status.appleConnected ? "checkmark.circle.fill" : "xmark.circle")
+                                    .foregroundStyle(musicStatus.status.appleConnected ? .green : .secondary)
+                                Text("Apple Music")
+                            }
                         }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    } else if musicStatus.isLoading {
+                        ProgressView().controlSize(.small)
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+
+                    if let err = musicStatus.errorMessage {
+                        Text(err)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(Color(.tertiaryLabel))
+                // NavigationLink inside a Form already draws the disclosure chevron.
             }
         }
         .task {
-            do {
-                status = try await MusicService.shared.status()
-            } catch {
-                err = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            }
+            await musicStatus.refresh()
         }
     }
 }

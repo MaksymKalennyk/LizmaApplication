@@ -5,21 +5,22 @@ import StoreKit
 @MainActor
 final class MusicConnectViewModel: ObservableObject {
 
-    @Published var status = ProvidersStatus(spotifyConnected: false, appleConnected: false)
+    /// The app-wide provider status (see `MusicStatusStore`); writing it updates every screen.
+    var status: ProvidersStatus {
+        get { MusicStatusStore.shared.status }
+        set { MusicStatusStore.shared.apply(newValue) }
+    }
     @Published var errorMessage: String?
+    /// True from tapping "Connect" until the Spotify sign-in sheet has finished.
+    @Published private(set) var isConnectingSpotify = false
 
     private var webAuthSession: ASWebAuthenticationSession?
     private let anchorProvider = WebAuthAnchorProvider()
 
-    func reloadStatus() async {
-        do {
-            status = try await MusicService.shared.status()
-        } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-
     func connectSpotify() {
+        guard !isConnectingSpotify else { return }
+        isConnectingSpotify = true
+        errorMessage = nil
         Task { @MainActor in
             do {
                 let authURL = try await MusicService.shared.spotifyAuthorizeURL()
@@ -30,35 +31,49 @@ final class MusicConnectViewModel: ObservableObject {
                     callbackURLScheme: scheme
                 ) { [weak self] callbackURL, error in
                     Task { @MainActor in
-                        guard let self else { return }
-                        if let error {
-                            self.errorMessage = error.localizedDescription
-                            self.webAuthSession = nil
-                            return
-                        }
-                        guard let callbackURL else {
-                            self.errorMessage = "Missing callback URL"
-                            self.webAuthSession = nil
-                            return
-                        }
-                        do {
-                            try await MusicService.shared.handleSpotifyCallback(url: callbackURL)
-                            self.status.spotifyConnected = true
-                        } catch {
-                            self.errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                        }
-                        self.webAuthSession = nil
+                        await self?.finishSpotifySignIn(callbackURL: callbackURL, error: error)
                     }
                 }
 
                 session.presentationContextProvider = anchorProvider
                 session.prefersEphemeralWebBrowserSession = true
                 self.webAuthSession = session
-                _ = session.start()
-
+                if !session.start() {
+                    self.webAuthSession = nil
+                    self.isConnectingSpotify = false
+                    self.errorMessage = "Couldn't open the Spotify sign-in page."
+                }
             } catch {
-                self.errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                self.isConnectingSpotify = false
+                self.errorMessage = error.userMessage
             }
+        }
+    }
+
+    private func finishSpotifySignIn(callbackURL: URL?, error: Error?) async {
+        defer {
+            webAuthSession = nil
+            isConnectingSpotify = false
+        }
+        if let error {
+            // Closing the sign-in sheet is the user's choice, not an error.
+            if let authError = error as? ASWebAuthenticationSessionError, authError.code == .canceledLogin {
+                return
+            }
+            errorMessage = error.localizedDescription
+            return
+        }
+        guard let callbackURL else {
+            errorMessage = "Missing callback URL"
+            return
+        }
+        do {
+            try await MusicService.shared.handleSpotifyCallback(url: callbackURL)
+            errorMessage = nil
+            status.spotifyConnected = true
+            await MusicStatusStore.shared.refresh()
+        } catch {
+            errorMessage = error.userMessage
         }
     }
 
