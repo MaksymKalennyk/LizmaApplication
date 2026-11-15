@@ -7,6 +7,8 @@ final class AuthViewModel: ObservableObject {
     @Published var password = ""
     @Published var isLoading = false
     @Published var error: String? = nil
+    /// A neutral message for the sign-in screen (e.g. after deleting the account).
+    @Published var notice: String? = nil
     @Published var isSignedIn = AuthService.shared.isSignedIn
 
     private var cancellables = Set<AnyCancellable>()
@@ -24,9 +26,11 @@ final class AuthViewModel: ObservableObject {
         await auth(action: { try await AuthService.shared.signIn(username: username, password: self.password) })
     }
 
-    func signUp() async {
+    func signUp(acceptTerms: Bool) async {
         let username = trimmedUsername
-        await auth(action: { try await AuthService.shared.signUp(username: username, password: self.password) })
+        await auth(action: {
+            try await AuthService.shared.signUp(username: username, password: self.password, acceptTerms: acceptTerms)
+        })
     }
 
     /// What the user typed, without stray spaces/newlines (validation checks the same trimmed value).
@@ -35,7 +39,7 @@ final class AuthViewModel: ObservableObject {
     }
 
     private func auth(action: @escaping () async throws -> Void) async {
-        error = nil; isLoading = true
+        error = nil; notice = nil; isLoading = true
         do {
             try await action()
             password = ""
@@ -53,6 +57,12 @@ final class AuthViewModel: ObservableObject {
         isSignedIn = false
     }
 
+    /// The server deleted the account: back to the sign-in screen with a confirmation.
+    func accountDeleted() {
+        signOut()
+        notice = "Your account was deleted"
+    }
+
     private func handleSessionExpired() {
         guard isSignedIn else { return }
         MusicStatusStore.shared.reset()
@@ -65,6 +75,7 @@ final class AuthViewModel: ObservableObject {
         username = ""
         password = ""
         error = nil
+        notice = nil
         isLoading = false
     }
 }
