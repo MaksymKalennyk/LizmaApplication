@@ -6,6 +6,7 @@ import com.example.lizma.exception.FriendRequestAlreadyProcessedException;
 import com.example.lizma.exception.FriendRequestNotFoundException;
 import com.example.lizma.exception.InvalidActionException;
 import com.example.lizma.exception.UnauthorizedActionException;
+import com.example.lizma.exception.UserNotFoundException;
 import com.example.lizma.model.FriendRequest;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.enums.FriendRequestStatus;
@@ -30,6 +31,7 @@ public class FriendRequestService {
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipService friendshipService;
     private final UserService userService;
+    private final BlockService blockService;
 
     @Transactional
     public SendResult sendFriendRequest(Long requesterId, Long recipientId) {
@@ -38,7 +40,13 @@ public class FriendRequestService {
         }
         Users requester = userService.getById(requesterId);
         Users recipient = userService.getById(recipientId);
+        if (recipient.isBanned()) { // suspended accounts are invisible to everyone
+            throw new UserNotFoundException("User not found");
+        }
 
+        if (blockService.blockedEitherWay(requesterId, recipientId)) {
+            throw new UnauthorizedActionException(BlockService.CANT_CONNECT_MESSAGE);
+        }
         if (friendshipService.areFriends(requester, recipient)) {
             throw new ConflictException("You are already friends");
         }

@@ -1,6 +1,7 @@
 package com.example.lizma.service;
 
 import com.example.lizma.exception.InvalidActionException;
+import com.example.lizma.exception.UnauthorizedActionException;
 import com.example.lizma.model.Friendship;
 import com.example.lizma.model.Users;
 import com.example.lizma.repo.FriendRequestRepository;
@@ -21,6 +22,7 @@ public class FriendshipService {
     private final FriendshipRepository friendshipRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final UserService userService;
+    private final BlockService blockService;
 
     @Transactional(readOnly = true)
     public List<Friendship> getUserFriendships(Long userId) {
@@ -53,6 +55,9 @@ public class FriendshipService {
     public boolean befriend(Users a, Users b) {
         if (a.getId().equals(b.getId())) {
             throw new InvalidActionException("You can't add yourself as a friend");
+        }
+        if (blockService.blockedEitherWay(a.getId(), b.getId())) {
+            throw new UnauthorizedActionException(BlockService.CANT_CONNECT_MESSAGE);
         }
         friendRequestRepository.findPendingBetween(a, b).forEach(request -> request.setStatus(ACCEPTED));
         if (areFriends(a, b)) {

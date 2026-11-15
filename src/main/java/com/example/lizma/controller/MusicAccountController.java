@@ -47,12 +47,6 @@ public class MusicAccountController {
         return Map.of("developerToken", appleDevToken);
     }
 
-    @Operation(summary = "Get Spotify authorization URL for client login")
-    @GetMapping("/spotify/auth-url")
-    public Map<String, String> spotifyAuthUrl() {
-        return Map.of("authUrl", spotifyOAuthService.getAuthorizeUrl());
-    }
-
     @Operation(summary = "Connect Apple Music by saving user token")
     @PostMapping("/apple/connect")
     public Map<String, String> appleConnect(@Valid @RequestBody AppleConnectRequest req, @AuthenticationPrincipal Users me) {

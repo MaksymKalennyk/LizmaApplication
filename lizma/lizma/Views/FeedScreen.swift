@@ -22,6 +22,8 @@ struct FeedScreen: View {
     @State private var selectedPostForReaction: PostResponse? = nil
     @State private var selectedPostForReactionList: PostResponse? = nil
     @State private var selectedPostForComments: PostResponse? = nil
+    @State private var reportTarget: ReportTarget? = nil
+    @State private var blockTarget: BlockTarget? = nil
     @State private var selfUsername: String? = nil
 
     var body: some View {
@@ -54,6 +56,12 @@ struct FeedScreen: View {
                             },
                             onComment: {
                                 selectedPostForComments = post
+                            },
+                            onReport: {
+                                reportTarget = ReportTarget(type: .post, targetId: Int64(post.id))
+                            },
+                            onBlock: {
+                                blockTarget = BlockTarget(userId: Int64(post.authorId), username: post.authorUsername)
                             }
                         )
                         .padding(.bottom, 90)
@@ -93,14 +101,27 @@ struct FeedScreen: View {
         } message: {
             Text(reactionError ?? "")
         }
+        .blockConfirmation(target: $blockTarget) { blocked in
+            // Hide their posts right away; the reload triggered by `.friendsChanged` confirms it.
+            posts.removeAll { Int64($0.authorId) == blocked.userId }
+            if !posts.contains(where: { $0.id == currentPostId }) {
+                currentPostId = posts.first?.id
+            }
+        }
+        // The feed is always dark, so everything that slides over it is dark as well.
+        .sheet(item: $reportTarget) { target in
+            ReportSheet(target: target)
+                .preferredColorScheme(.dark)
+        }
 
         .sheet(item: Binding(
             get: { playingTrackId.map { IdentifiableString(value: $0) } },
             set: { playingTrackId = $0?.value }
         )) { identifiableStr in
             SpotifyEmbedView(trackId: identifiableStr.value)
-                .presentationDetents([.height(200)])
+                .presentationDetents([.height(SpotifyEmbedView.sheetHeight)])
                 .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
         }
 
         .sheet(item: Binding(
@@ -112,6 +133,7 @@ struct FeedScreen: View {
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+            .preferredColorScheme(.dark)
         }
 
         .sheet(item: Binding(
@@ -121,6 +143,7 @@ struct FeedScreen: View {
             ReactionListView(postId: wrapper.value.id)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
         }
 
         .sheet(item: Binding(
@@ -128,9 +151,12 @@ struct FeedScreen: View {
             set: { selectedPostForComments = $0?.value }
         )) { wrapper in
             let postId = wrapper.value.id
-            CommentsScreen(postId: postId, onCommentAdded: { incrementCommentsCount(for: postId) })
+            CommentsScreen(postId: postId,
+                           postAuthorId: wrapper.value.authorId,
+                           onCommentAdded: { incrementCommentsCount(for: postId) })
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
         }
     }
 

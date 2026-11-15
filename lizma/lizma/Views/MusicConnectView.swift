@@ -8,82 +8,78 @@ struct MusicConnectView: View {
 
     var body: some View {
         List {
-            Section("STATUS") {
-                HStack {
-                    Label("Spotify", systemImage: "music.note")
-                    Spacer()
-                    if !musicStatus.isLoaded {
-                        if musicStatus.isLoading {
-                            ProgressView()
-                        } else {
-                            Text("Unknown").foregroundStyle(.secondary)
-                        }
-                    } else if spotifyConnected {
-                        HStack(spacing: 4) {
-                            Text("Connected")
-                            Image(systemName: "checkmark.circle.fill")
-                        }
-                        .foregroundStyle(.green)
-                    } else {
-                        Text("Not connected").foregroundStyle(.secondary)
-                    }
-                }
-
-                HStack {
-                    Label("Apple Music", systemImage: "applelogo")
-                    Spacer()
-                    Image(systemName: musicStatus.status.appleConnected ? "checkmark.circle.fill" : "xmark.circle")
-                        .foregroundStyle(musicStatus.status.appleConnected ? .green : .secondary)
-                }
-            }
-
+            // One row per service: what it is, its state and the one thing you can do with it.
             Section {
-                Button {
-                    viewModel.connectSpotify()
-                } label: {
-                    HStack {
+                HStack(spacing: 12) {
+                    ServiceIcon(systemName: "music.note", color: .green)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Spotify")
+                        spotifyStatus
+                            .font(.caption)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    if viewModel.isConnectingSpotify {
+                        ProgressView()
+                    } else if musicStatus.isLoaded {
                         if spotifyConnected {
-                            Label("Reconnect Spotify", systemImage: "arrow.triangle.2.circlepath")
+                            Button("Reconnect") { viewModel.connectSpotify() }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                         } else {
-                            Label("Connect Spotify", systemImage: "music.note")
-                        }
-                        if viewModel.isConnectingSpotify {
-                            Spacer()
-                            ProgressView()
+                            Button("Connect") { viewModel.connectSpotify() }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.small)
                         }
                     }
                 }
-                .disabled(viewModel.isConnectingSpotify)
 
-                Button {
-                    viewModel.connectAppleMusic()
-                } label: {
+                HStack(spacing: 12) {
+                    ServiceIcon(systemName: "applelogo", color: .gray)
+
                     VStack(alignment: .leading, spacing: 2) {
-                        Label("Connect Apple Music", systemImage: "applelogo")
+                        Text("Apple Music")
                         Text("Coming soon")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-                // Apple Music isn't supported yet.
-                .disabled(true)
+                .opacity(0.6)
             } footer: {
                 Text("Connect Spotify to search tracks and share them with your friends.")
             }
 
-            if let err = viewModel.errorMessage {
+            if let err = viewModel.errorMessage ?? musicStatus.errorMessage {
                 Section {
                     Text(err).foregroundStyle(.red)
-                }
-            } else if let statusError = musicStatus.errorMessage {
-                Section {
-                    Text(statusError).foregroundStyle(.red)
                 }
             }
         }
         .navigationTitle("Music Accounts")
+        .navigationBarTitleDisplayMode(.inline)
         .task { await musicStatus.refresh() }
         .refreshable { await musicStatus.refresh() }
+    }
+
+    @ViewBuilder
+    private var spotifyStatus: some View {
+        if !musicStatus.isLoaded {
+            Text(musicStatus.isLoading ? "Checking…" : "Status unknown")
+                .foregroundStyle(.secondary)
+        } else if spotifyConnected {
+            // Not a `Label`: in a list row that would pull the separator over to its text.
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.circle.fill")
+                Text("Connected")
+            }
+            .foregroundStyle(.green)
+            .accessibilityElement(children: .combine)
+        } else {
+            Text("Not connected")
+                .foregroundStyle(.secondary)
+        }
     }
 }
 

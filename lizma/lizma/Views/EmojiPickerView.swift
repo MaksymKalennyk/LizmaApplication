@@ -38,6 +38,19 @@ struct EmojiPickerView: View {
         }
     }
 
+    private struct Cell: Identifiable {
+        let id: String
+        let emoji: String
+    }
+
+    /// The sections overlap, and ids must be unique in the whole grid: with the emoji alone as the id,
+    /// every emoji already shown in an earlier section was silently left out of the later ones.
+    private func cells(of section: (title: String, emojis: [String])) -> [Cell] {
+        section.emojis.enumerated().map { index, emoji in
+            Cell(id: "\(section.title)-\(index)", emoji: emoji)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -52,12 +65,12 @@ struct EmojiPickerView: View {
                                         .foregroundColor(.secondary)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(.top, 8)) {
-                                ForEach(section.emojis, id: \.self) { emoji in
+                                ForEach(cells(of: section)) { cell in
                                     Button {
-                                        onSelect(emoji)
+                                        onSelect(cell.emoji)
                                         dismiss()
                                     } label: {
-                                        Text(emoji)
+                                        Text(cell.emoji)
                                             .font(.system(size: 36))
                                     }
                                     .buttonStyle(.plain)
@@ -68,11 +81,10 @@ struct EmojiPickerView: View {
                     .padding()
                 }
             }
-            .searchable(text: $searchText, prompt: "Search")
+            .searchable(text: $searchText, prompt: "Search emoji")
+            .navigationTitle("React")
             .navigationBarTitleDisplayMode(.inline)
-
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(.systemGroupedBackground))
         }
     }
 }
