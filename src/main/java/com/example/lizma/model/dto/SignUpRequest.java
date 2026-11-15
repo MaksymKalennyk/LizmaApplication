@@ -1,6 +1,7 @@
 package com.example.lizma.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -20,4 +21,8 @@ public class SignUpRequest {
     @NotBlank(message = "Password cannot be blank")
     @Size(min = 8, max = 255, message = "Password length must be between 8 and 255 characters")
     private String password;
+
+    @Schema(description = "Must be true: the user accepted the Terms of Use and Privacy Policy", example = "true")
+    @AssertTrue(message = "You need to accept the Terms of Use and Privacy Policy")
+    private boolean acceptTerms;
 }

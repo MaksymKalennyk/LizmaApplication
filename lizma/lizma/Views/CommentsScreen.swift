@@ -2,8 +2,12 @@ import SwiftUI
 
 struct CommentsScreen: View {
     let postId: Int
+    /// Blocking the post's author hides the whole post, so the sheet closes.
+    let postAuthorId: Int
     /// Called after a comment or reply was posted (the feed bumps its comment count).
     var onCommentAdded: () -> Void = {}
+
+    @Environment(\.dismiss) private var dismiss
 
     @State private var comments: [CommentResponse] = []
     @State private var newCommentText = ""
@@ -12,105 +16,163 @@ struct CommentsScreen: View {
     @State private var isPosting = false
     /// Loading the list failed: shown instead of the (empty) list, with Retry.
     @State private var loadError: String? = nil
-    /// Posting or liking failed: shown next to the input, the list stays visible.
+    /// Posting or liking failed: shown above the input, the list stays visible.
     @State private var actionError: String? = nil
     @State private var likesInFlight: Set<Int> = []
 
     @State private var replyTarget: CommentResponse? = nil
+    @FocusState private var isInputFocused: Bool
+    /// The comment to bring into view (the one just posted).
+    @State private var scrollTarget: Int? = nil
+
+    @State private var selfUsername: String? = nil
+    @State private var reportTarget: ReportTarget? = nil
+    @State private var blockTarget: BlockTarget? = nil
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Group {
-                    if comments.isEmpty {
-                        if let loadError, !isLoading {
-                            VStack(spacing: 12) {
-                                Text(loadError)
-                                    .foregroundColor(.red)
-                                    .multilineTextAlignment(.center)
-                                Button("Retry") { Task { await loadComments() } }
-                            }
-                            .padding()
-                        } else if isLoading || !hasLoaded {
-                            ProgressView()
-                        } else {
-                            ContentUnavailableView(
-                                "No comments yet",
-                                systemImage: "bubble.left.and.bubble.right",
-                                description: Text("Be the first to comment.")
-                            )
-                        }
-                    } else {
-                        ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 16) {
-                                ForEach($comments) { $comment in
-                                    CommentRowView(
-                                        comment: $comment,
-                                        isReply: false,
-                                        onReply: { target in replyTarget = target },
-                                        onLike: { targetId in Task { await toggleLike(commentId: targetId) } }
-                                    )
-                                }
-                            }
-                            .padding()
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                commentList
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 Divider()
 
-                VStack(spacing: 8) {
-                    if let target = replyTarget {
-                        HStack {
-                            Text("Replying to @\(target.authorUsername)")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Button {
-                                replyTarget = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.gray)
-                            }
-                            .accessibilityLabel("Cancel reply")
-                        }
-                        .padding(.horizontal)
-                    }
-
-                    if let actionError {
-                        Text(actionError)
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                    }
-
-                    HStack {
-                        TextField(replyTarget == nil ? "Add a comment..." : "Write a reply...", text: $newCommentText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .disabled(isPosting)
-                            .submitLabel(.send)
-                            .onSubmit { Task { await postComment() } }
-
-                        Button("Post") {
-                            Task { await postComment() }
-                        }
-                        .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-                }
-                .padding(.top, 8)
-                .background(Color(UIColor.systemBackground))
+                composer
             }
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $reportTarget) { target in
+                // Presented over the dark feed, like this sheet.
+                ReportSheet(target: target)
+                    .preferredColorScheme(.dark)
+            }
+            .blockConfirmation(target: $blockTarget) { blocked in
+                if blocked.userId == Int64(postAuthorId) {
+                    // Their post is gone from the feed as well: nothing left to show here.
+                    dismiss()
+                    return
+                }
+                // Hide their comments right away, then reload what the server now shows.
+                removeComments(byAuthorId: blocked.userId)
+                Task { await loadComments() }
+            }
             .task {
+                selfUsername = AuthService.shared.currentUsername
                 await loadComments()
             }
         }
     }
+
+    // MARK: - Content
+
+    @ViewBuilder
+    private var commentList: some View {
+        if comments.isEmpty {
+            if let loadError, !isLoading {
+                ContentUnavailableView {
+                    Label("Couldn't load comments", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(loadError)
+                } actions: {
+                    Button("Retry") { Task { await loadComments() } }
+                        .buttonStyle(.bordered)
+                }
+            } else if isLoading || !hasLoaded {
+                ProgressView()
+            } else {
+                ContentUnavailableView(
+                    "No comments yet",
+                    systemImage: "bubble.left.and.bubble.right",
+                    description: Text("Be the first to comment.")
+                )
+            }
+        } else {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 18) {
+                        ForEach($comments) { $comment in
+                            CommentRowView(
+                                comment: $comment,
+                                isReply: false,
+                                selfUsername: selfUsername,
+                                onReply: { target in
+                                    replyTarget = target
+                                    isInputFocused = true
+                                },
+                                onLike: { targetId in Task { await toggleLike(commentId: targetId) } },
+                                onReport: { target in
+                                    reportTarget = ReportTarget(type: .comment, targetId: Int64(target.id))
+                                },
+                                onBlock: { target in
+                                    blockTarget = BlockTarget(userId: Int64(target.authorId),
+                                                              username: target.authorUsername)
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: scrollTarget) { _, target in
+                    guard let target else { return }
+                    withAnimation { proxy.scrollTo(target, anchor: .bottom) }
+                    scrollTarget = nil
+                }
+            }
+        }
+    }
+
+    /// Reply banner, error line and the input field.
+    private var composer: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let target = replyTarget {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrowshape.turn.up.left.fill")
+                        .font(.caption2)
+                    Text("Replying to \(target.authorUsername)")
+                        .font(.caption)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Spacer(minLength: 8)
+                    Button {
+                        replyTarget = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.body)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Cancel reply")
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+
+            if let actionError {
+                Text(actionError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 6)
+            }
+
+            CommentInputBar(
+                text: $newCommentText,
+                placeholder: replyTarget == nil ? "Add a comment…" : "Write a reply…",
+                isSending: isPosting,
+                isFocused: $isInputFocused,
+                onSend: { Task { await postComment() } }
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .animation(.easeInOut(duration: 0.2), value: replyTarget?.id)
+    }
+
+    // MARK: - Actions
 
     private func loadComments() async {
         isLoading = true
@@ -154,6 +216,7 @@ struct CommentsScreen: View {
         let content = newCommentText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !content.isEmpty, !isPosting else { return }
 
+        // The field stays enabled while posting, so the keyboard never drops.
         isPosting = true
         actionError = nil
         defer { isPosting = false }
@@ -170,12 +233,35 @@ struct CommentsScreen: View {
                 comments.append(newComment)
             }
 
-            newCommentText = ""
+            // Keep anything typed while the request was in flight.
+            if newCommentText.trimmingCharacters(in: .whitespacesAndNewlines) == content {
+                newCommentText = ""
+            }
             replyTarget = nil
+            scrollTarget = newComment.id
             onCommentAdded()
         } catch {
             guard !error.isCancellation else { return }
-            actionError = "Couldn't post comment: \(error.userMessage)"
+            actionError = postFailureMessage(error)
+        }
+    }
+
+    /// When the server explains what is wrong with the comment (e.g. the word filter), its message
+    /// reads fine by itself; other failures (network, server errors) get some context.
+    private func postFailureMessage(_ error: Error) -> String {
+        if case APIError.server(let code, let message) = error, (400..<500).contains(code) {
+            return message
+        }
+        return "Couldn't post comment: \(error.userMessage)"
+    }
+
+    private func removeComments(byAuthorId userId: Int64) {
+        comments.removeAll { Int64($0.authorId) == userId }
+        for i in comments.indices {
+            comments[i].replies?.removeAll { Int64($0.authorId) == userId }
+        }
+        if let target = replyTarget, Int64(target.authorId) == userId {
+            replyTarget = nil
         }
     }
 

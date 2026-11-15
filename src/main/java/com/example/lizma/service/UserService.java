@@ -44,9 +44,10 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
+    /** Users whose name contains the query; suspended accounts are not listed. */
     public List<Users> searchByUsername(String query, int limit) {
         int size = (limit <= 0 || limit > MAX_SEARCH_LIMIT) ? DEFAULT_SEARCH_LIMIT : limit;
-        return userRepository.findByUsernameContainingIgnoreCase(query, PageRequest.of(0, size));
+        return userRepository.findByUsernameContainingIgnoreCaseAndBannedFalse(query, PageRequest.of(0, size));
     }
 
     public boolean usernameExists(String username) {

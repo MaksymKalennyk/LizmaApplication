@@ -54,6 +54,10 @@ public class MusicAccountService {
     /**
      * Not transactional on purpose: a refreshed token is saved right away, so a failing search afterwards
      * can't roll it back (Spotify may rotate the refresh token, losing it would force a reconnect).
+     * <p>
+     * If Spotify rejects the access token (it expired early or the user revoked access), the token is
+     * refreshed once and the search retried. If that doesn't work either, the stored tokens are useless:
+     * they are removed, so the app shows "Connect Spotify" again.
      */
     public JsonNode searchSpotify(Long userId, String query) {
         if (query == null || query.isBlank()) {
@@ -62,19 +66,29 @@ public class MusicAccountService {
         Users user = userService.getById(userId);
         UserMusicAccount account = repo.findByUserAndProvider(user, MusicProvider.SPOTIFY)
                 .orElseThrow(() -> new ConflictException("Spotify account is not connected"));
+        String q = query.strip();
 
-        return spotifyOAuthService.searchTracks(query.strip(), validAccessToken(account));
+        try {
+            try {
+                return spotifyOAuthService.searchTracks(q, validAccessToken(account, false));
+            } catch (SpotifyOAuthService.AccessTokenRejectedException rejected) {
+                return spotifyOAuthService.searchTracks(q, validAccessToken(account, true));
+            }
+        } catch (SpotifyOAuthService.AccessTokenRejectedException | SpotifyOAuthService.ReconnectRequiredException e) {
+            repo.delete(account);
+            throw new ConflictException(SpotifyOAuthService.RECONNECT_MESSAGE);
+        }
     }
 
-    private String validAccessToken(UserMusicAccount account) {
+    private String validAccessToken(UserMusicAccount account, boolean forceRefresh) {
         Instant expiresAt = account.getSpotifyAccessTokenExpiresAt();
         boolean stillValid = account.getSpotifyAccessToken() != null && expiresAt != null
                 && Instant.now().isBefore(expiresAt.minusSeconds(EXPIRY_MARGIN_SECONDS));
-        if (stillValid) {
+        if (stillValid && !forceRefresh) {
             return account.getSpotifyAccessToken();
         }
         if (account.getSpotifyRefreshToken() == null) {
-            throw new ConflictException("Spotify session expired, please reconnect Spotify");
+            throw new SpotifyOAuthService.ReconnectRequiredException();
         }
 
         SpotifyOAuthService.ExchangeResult refreshed = spotifyOAuthService.refreshAccessToken(account.getSpotifyRefreshToken());

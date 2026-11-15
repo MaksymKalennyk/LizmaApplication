@@ -30,13 +30,23 @@ final class AuthService {
         try Keychain.set(response.token, forKey: Self.tokenKey)
     }
 
-    func signUp(username: String, password: String) async throws {
-        let req = SignUpRequest(username: username, password: password)
+    func signUp(username: String, password: String, acceptTerms: Bool) async throws {
+        let req = SignUpRequest(username: username, password: password, acceptTerms: acceptTerms)
         let response = try await APIClient.shared.send(JwtAuthenticationResponse.self,
                                                        path: "/auth/sign-up",
                                                        method: "POST",
                                                        body: req)
         try Keychain.set(response.token, forKey: Self.tokenKey)
+    }
+
+    /// Permanently deletes the account (posts, comments, reactions, friends, music connections).
+    /// A wrong password is a 400 with the server's message, so it never triggers the session-expired sign-out.
+    func deleteAccount(password: String) async throws {
+        _ = try await APIClient.shared.send(MessageResponse.self,
+                                            path: "/user/me/delete",
+                                            method: "POST",
+                                            body: DeleteAccountRequest(password: password))
+        signOut()
     }
 
     func signOut() {

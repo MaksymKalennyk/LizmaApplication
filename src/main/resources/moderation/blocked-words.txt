@@ -1,0 +1,64 @@
+# Words that can't be used in usernames, captions and comments (see ContentFilter).
+# One entry per line, lower case. "word" blocks exactly that word; "root*" blocks every word starting with it.
+# This is a starter list: extend it with what you see in reports. Keep roots specific to avoid
+# blocking innocent words (e.g. "retard*" would also block "retardant").
+
+# --- English ---
+fuck*
+motherfuck*
+shit
+shits
+shitty
+shithead*
+bullshit
+bitch*
+cunt*
+asshole*
+dickhead*
+pussy
+twat
+whore*
+slut*
+wanker*
+nigger*
+nigga*
+faggot*
+fag
+fags
+retard
+retards
+retarded
+kys
+
+# --- Russian / Ukrainian ---
+хуй*
+хуе*
+хуя*
+пизд*
+ебат*
+ебан*
+ебал*
+ебл*
+ебуч*
+єбат*
+їбат*
+йоба*
+бля
+блять
+бляд*
+сука
+суки
+сучара*
+мудак*
+мудил*
+пидор*
+пидар*
+підор*
+підар*
+педик*
+залуп*
+шлюх*
+гандон*
+курва
+мразь
+дроч*
