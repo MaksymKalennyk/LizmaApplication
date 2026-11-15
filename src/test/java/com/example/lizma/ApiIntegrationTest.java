@@ -399,8 +399,9 @@ class ApiIntegrationTest {
                 .andExpect(status().isOk())).get("id").asLong();
     }
 
+    /** Works for sign-in too: the extra acceptTerms field is ignored there. */
     private String credentials(String username, String password) throws Exception {
-        return objectMapper.writeValueAsString(Map.of("username", username, "password", password));
+        return objectMapper.writeValueAsString(Map.of("username", username, "password", password, "acceptTerms", true));
     }
 
     private String postJson(String caption) throws Exception {

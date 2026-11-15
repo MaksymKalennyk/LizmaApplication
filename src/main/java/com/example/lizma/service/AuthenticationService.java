@@ -1,5 +1,6 @@
 package com.example.lizma.service;
 
+import com.example.lizma.exception.UnauthorizedActionException;
 import com.example.lizma.exception.UserNotFoundException;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.dto.JwtAuthenticationResponse;
@@ -10,25 +11,33 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+
+    public static final String SUSPENDED_MESSAGE = "This account has been suspended";
 
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final ContentFilter contentFilter;
 
     public JwtAuthenticationResponse signUp(SignUpRequest request) {
+        contentFilter.check(request.getUsername());
         var user = Users.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.ROLE_USER)
+                .termsAcceptedAt(Instant.now())
                 .build();
 
         userService.create(user);
@@ -45,6 +54,8 @@ public class AuthenticationService {
                     request.getUsername(),
                     request.getPassword()
             ));
+        } catch (DisabledException ex) {
+            throw new UnauthorizedActionException(SUSPENDED_MESSAGE);
         } catch (BadCredentialsException ex) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
         }

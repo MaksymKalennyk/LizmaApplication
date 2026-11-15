@@ -4,6 +4,7 @@ import com.example.lizma.model.FriendRequest;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.enums.FriendRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,4 +28,8 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
               and ((r.requester = :a and r.recipient = :b) or (r.requester = :b and r.recipient = :a))
             """)
     List<FriendRequest> findPendingBetween(@Param("a") Users a, @Param("b") Users b);
+
+    @Modifying
+    @Query("delete from FriendRequest r where (r.requester = :a and r.recipient = :b) or (r.requester = :b and r.recipient = :a)")
+    void deleteBetween(@Param("a") Users a, @Param("b") Users b);
 }

@@ -17,6 +17,18 @@ struct PostComposerView: View {
     @State private var errorMessage: String? = nil
     @State private var searchTask: Task<Void, Never>? = nil
 
+    /// The server's limit for captions.
+    private static let maxCaptionLength = 1024
+
+    private var isConnected: Bool {
+        musicStatus.isLoaded && musicStatus.status.spotifyConnected
+    }
+
+    /// Something the user would lose by leaving: a picked track, a caption or a search.
+    private var hasDraft: Bool {
+        selectedTrack != nil || !text.isEmpty || !searchQuery.isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -24,6 +36,7 @@ struct PostComposerView: View {
 
                 if let errorMessage {
                     Text(errorMessage)
+                        .font(.footnote)
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.center)
                         .padding()
@@ -32,23 +45,29 @@ struct PostComposerView: View {
             .navigationTitle("New post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        resetComposer()
-                        selectedTab = 0
+                // Nothing to cancel or post until Spotify is connected and something is picked.
+                if isConnected && hasDraft {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            resetComposer()
+                            selectedTab = 0
+                        }
+                        .disabled(submitting)
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        Task { await submit() }
-                    } label: {
-                        if submitting {
-                            ProgressView().controlSize(.regular)
-                        } else {
-                            Text("Post")
+                if isConnected && selectedTrack != nil {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            Task { await submit() }
+                        } label: {
+                            if submitting {
+                                ProgressView().controlSize(.regular)
+                            } else {
+                                Text("Post").fontWeight(.semibold)
+                            }
                         }
+                        .disabled(submitting)
                     }
-                    .disabled(submitting || selectedTrack == nil)
                 }
             }
             .task {
@@ -70,12 +89,8 @@ struct PostComposerView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else if !musicStatus.status.spotifyConnected {
-            // Tracks come from Spotify search, so there is nothing to post without it.
-            VStack {
-                ConnectMusicBanner()
-                    .padding(.top)
-                Spacer()
-            }
+            ConnectMusicPrompt()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let track = selectedTrack {
             selectedTrackView(track)
         } else {
@@ -104,112 +119,137 @@ struct PostComposerView: View {
     }
 
     private func selectedTrackView(_ track: SpotifyTrack) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+        Form {
+            Section {
                 HStack(spacing: 12) {
-                    if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
-                        AsyncImage(url: url) { image in
-                            image.resizable().aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Color.gray.opacity(0.3)
-                        }
-                        .frame(width: 80, height: 80)
-                        .cornerRadius(8)
-                    } else {
-                        Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 80, height: 80).cornerRadius(8)
-                    }
+                    artwork(of: track, side: 64, cornerRadius: 8)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(track.name).font(.headline).lineLimit(2)
-                        Text(track.artists.map { $0.name }.joined(separator: ", "))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(track.name)
+                            .font(.headline)
+                            .lineLimit(2)
+                        Text(artistNames(of: track))
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
 
-                    Spacer()
+                    Spacer(minLength: 8)
 
                     Button {
                         selectedTrack = nil
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .font(.title3)
+                            .foregroundStyle(.tertiary)
                     }
-                    .accessibilityLabel("Remove selected track")
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Choose another track")
                 }
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
+                .padding(.vertical, 4)
+            }
 
+            Section {
                 TextField("Add a caption (optional)", text: $text, axis: .vertical)
                     .lineLimit(3...8)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
+                    .disabled(submitting)
+                    .onChange(of: text) { _, newValue in
+                        if newValue.count > Self.maxCaptionLength {
+                            text = String(newValue.prefix(Self.maxCaptionLength))
+                        }
+                    }
+            } footer: {
+                // Only once the limit is in sight.
+                if text.count > Self.maxCaptionLength - 100 {
+                    Text("\(text.count)/\(Self.maxCaptionLength)")
+                }
             }
-            .padding()
         }
     }
 
     private var searchView: some View {
-        VStack {
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundColor(.gray)
-                TextField("Search for a track...", text: $searchQuery)
-                    .autocorrectionDisabled()
-                    .onChange(of: searchQuery) { _, newValue in
-                        scheduleSearch(for: newValue)
+        List {
+            if searchResults.isEmpty {
+                Group {
+                    if isSearching {
+                        ProgressView()
+                    } else if trimmedQuery.isEmpty {
+                        ContentUnavailableView(
+                            "Find a track",
+                            systemImage: "music.note",
+                            description: Text("Search Spotify for a song to share with your friends.")
+                        )
+                    } else if hasSearched {
+                        ContentUnavailableView.search(text: trimmedQuery)
                     }
-            }
-            .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray6)))
-            .padding()
-
-            if isSearching {
-                ProgressView().padding()
-            }
-
-            if searchResults.isEmpty && !isSearching {
-                let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.isEmpty {
-                    ContentUnavailableView(
-                        "Find a track",
-                        systemImage: "music.note",
-                        description: Text("Search Spotify for a song to share with your friends.")
-                    )
-                } else if hasSearched {
-                    ContentUnavailableView.search(text: trimmed)
-                } else {
-                    Spacer()
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             } else {
-                List(searchResults) { track in
+                ForEach(searchResults) { track in
                     Button {
                         selectedTrack = track
                     } label: {
-                        HStack {
-                            if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable().aspectRatio(contentMode: .fill)
-                                } placeholder: {
-                                    Color.gray.opacity(0.3)
-                                }
-                                .frame(width: 50, height: 50)
-                                .cornerRadius(4)
-                            } else {
-                                Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 50, height: 50).cornerRadius(4)
+                        HStack(spacing: 12) {
+                            artwork(of: track, side: 48, cornerRadius: 6)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(track.name)
+                                    .font(.body)
+                                    .foregroundStyle(Color.primary)
+                                    .lineLimit(1)
+                                Text(artistNames(of: track))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
                             }
 
-                            VStack(alignment: .leading) {
-                                Text(track.name).font(.headline).foregroundColor(.primary)
-                                Text(track.artists.map { $0.name }.joined(separator: ", "))
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
+                            Spacer(minLength: 0)
                         }
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
-                .listStyle(.plain)
             }
         }
+        .listStyle(.plain)
+        .searchable(text: $searchQuery,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Search Spotify")
+        .autocorrectionDisabled()
+        .onChange(of: searchQuery) { _, newValue in
+            scheduleSearch(for: newValue)
+        }
+    }
+
+    private var trimmedQuery: String {
+        searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func artistNames(of track: SpotifyTrack) -> String {
+        track.artists.map { $0.name }.joined(separator: ", ")
+    }
+
+    private func artwork(of track: SpotifyTrack, side: CGFloat, cornerRadius: CGFloat) -> some View {
+        Group {
+            if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
+                AsyncImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color(.systemGray5)
+                }
+            } else {
+                ZStack {
+                    Color(.systemGray5)
+                    Image(systemName: "music.note").foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(width: side, height: side)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .accessibilityHidden(true)
     }
 
     // MARK: - Actions
@@ -262,7 +302,7 @@ struct PostComposerView: View {
             musicId: track.id,
             musicProvider: "SPOTIFY",
             trackName: String(track.name.prefix(255)),
-            artistName: String(track.artists.map { $0.name }.joined(separator: ", ").prefix(255)),
+            artistName: String(artistNames(of: track).prefix(255)),
             albumCoverUrl: track.album.images?.first?.url,
             caption: caption.isEmpty ? nil : caption
         )
