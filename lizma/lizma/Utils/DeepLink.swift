@@ -1,23 +1,39 @@
 import Foundation
 
 enum DeepLink {
-    static let pendingKey = "pendingInviteUsername"
+    private static let pendingInviteKey = "pendingInviteToken"
+    /// Older builds stored an inviter's username here; usernames are no longer accepted as invites.
+    private static let legacyPendingKey = "pendingInviteUsername"
 
-    static func parseInviteUsername(from url: URL) -> String? {
+    private static let tokenLength = 20...64
+    private static let tokenCharacters = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+    )
+
+    /// Parses an invite link `lizma://i/<token>`. Anything else (e.g. `lizma://oauth-callback/spotify`)
+    /// is not an invite.
+    static func parseInviteToken(from url: URL) -> String? {
+        guard url.scheme?.lowercased() == "lizma", url.host?.lowercased() == "i" else { return nil }
         let comps = url.pathComponents.filter { $0 != "/" }
-        if comps.count >= 2, comps[0] == "u" { return comps[1] }
-        if comps.count == 1 { return comps[0] }
-        if url.scheme?.hasPrefix("http") == true, comps.count == 1 { return comps[0] }
-        return nil
+        guard comps.count == 1, let token = comps.first, isValidToken(token) else { return nil }
+        return token
     }
 
-    static func storePending(_ username: String) {
-        UserDefaults.standard.set(username, forKey: pendingKey)
+    /// Invite tokens are base64url: `^[A-Za-z0-9_-]{20,64}$`.
+    static func isValidToken(_ token: String) -> Bool {
+        tokenLength.contains(token.count) && token.unicodeScalars.allSatisfy { tokenCharacters.contains($0) }
     }
 
-    static func takePending() -> String? {
-        let t = UserDefaults.standard.string(forKey: pendingKey)
-        if t != nil { UserDefaults.standard.removeObject(forKey: pendingKey) }
-        return t
+    /// Keeps an invite opened while signed out, to accept it after signing in.
+    static func storePendingInvite(_ token: String) {
+        UserDefaults.standard.set(token, forKey: pendingInviteKey)
+    }
+
+    static func takePendingInvite() -> String? {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: legacyPendingKey)
+        guard let token = defaults.string(forKey: pendingInviteKey) else { return nil }
+        defaults.removeObject(forKey: pendingInviteKey)
+        return isValidToken(token) ? token : nil
     }
 }

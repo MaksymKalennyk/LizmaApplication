@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ProfileScreen: View {
     @EnvironmentObject private var auth: AuthViewModel
-    @State private var token: String = ""
     @StateObject private var requestsVM = RequestsViewModel()
 
     var body: some View {
@@ -19,59 +18,79 @@ struct ProfileScreen: View {
                     }
                 }
 
-                Section("Friend requests") {
-                    if requestsVM.loading {
+                Section("Incoming requests") {
+                    if requestsVM.loading && !requestsVM.hasLoaded {
                         ProgressView()
+                    } else if requestsVM.received.isEmpty {
+                        Text("No incoming requests").foregroundStyle(.secondary)
                     } else {
-                        if !requestsVM.received.isEmpty {
-                            ForEach(requestsVM.received) { req in
-                                RequestRow(req: req,
-                                           accept: { Task { await requestsVM.accept(req) } },
-                                           reject: { Task { await requestsVM.reject(req) } })
-                            }
-                        } else {
-                            Text("No incoming requests").foregroundStyle(.secondary)
+                        ForEach(requestsVM.received) { req in
+                            RequestRow(req: req,
+                                       isBusy: requestsVM.inFlight.contains(req.id),
+                                       accept: { Task { await requestsVM.accept(req) } },
+                                       reject: { Task { await requestsVM.reject(req) } })
                         }
+                    }
+                }
 
-                        if !requestsVM.sent.isEmpty {
-                            Section("Sent") {
-                                ForEach(requestsVM.sent) { req in
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text("→ \(req.recipientUsername)")
-                                            Text(req.status).font(.caption).foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                    }
-                                }
+                Section("Sent requests") {
+                    if requestsVM.loading && !requestsVM.hasLoaded {
+                        ProgressView()
+                    } else if requestsVM.sent.isEmpty {
+                        Text("No pending sent requests").foregroundStyle(.secondary)
+                    } else {
+                        ForEach(requestsVM.sent) { req in
+                            VStack(alignment: .leading) {
+                                Text("→ \(req.recipientUsername)")
+                                Text(req.status).font(.caption).foregroundStyle(.secondary)
                             }
                         }
                     }
-                    if let err = requestsVM.error { Text(err).foregroundStyle(.red) }
+                }
+
+                if let err = requestsVM.error {
+                    Section {
+                        Text(err).foregroundStyle(.red)
+                    }
                 }
             }
             .navigationTitle("Profile")
+            .refreshable {
+                await requestsVM.reload()
+                await MusicStatusStore.shared.refresh()
+            }
         }
         .task { await requestsVM.reload() }
+        .onReceive(NotificationCenter.default.publisher(for: .friendsChanged)) { _ in
+            Task { await requestsVM.reload() }
+        }
     }
 }
 
 private struct RequestRow: View {
     let req: FriendRequestDto
+    let isBusy: Bool
     let accept: () -> Void
     let reject: () -> Void
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
-                Text("from \(req.requesterUsername)")
-                Text(req.status).font(.caption).foregroundStyle(.secondary)
+            // Incoming requests are always pending, so only the name is shown.
+            Text(req.requesterUsername)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 8)
+            if isBusy {
+                ProgressView()
             }
-            Spacer()
             HStack(spacing: 8) {
                 Button("Accept", action: accept).buttonStyle(.borderedProminent)
                 Button("Decline", action: reject).buttonStyle(.bordered)
             }
+            .controlSize(.small)
+            .lineLimit(1)
+            .fixedSize()
+            .disabled(isBusy)
         }
     }
 }

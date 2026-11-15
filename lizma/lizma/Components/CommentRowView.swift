@@ -47,6 +47,8 @@ struct CommentRowView: View {
                         }
                     }
                 }
+                .accessibilityLabel(comment.isLikedByCurrentUser ? "Unlike" : "Like")
+                .accessibilityValue("\(comment.likesCount) likes")
             }
 
             if let replies = comment.replies, !replies.isEmpty {
@@ -64,14 +66,27 @@ struct CommentRowView: View {
         }
     }
     
-    private func formatDate(_ dateString: String) -> String {
+    // Formatters are expensive to create; one set is shared by all rows.
+    private static let isoWithFraction: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: dateString) ?? ISO8601DateFormatter().date(from: dateString) else {
+        return formatter
+    }()
+    private static let isoPlain = ISO8601DateFormatter()
+    private static let relative: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter
+    }()
+
+    private func formatDate(_ dateString: String) -> String {
+        guard let date = Self.isoWithFraction.date(from: dateString) ?? Self.isoPlain.date(from: dateString) else {
             return dateString
         }
-        let displayFormatter = RelativeDateTimeFormatter()
-        displayFormatter.unitsStyle = .abbreviated
-        return displayFormatter.localizedString(for: date, relativeTo: Date())
+        // The formatter turns a few seconds (or a tiny clock skew) into "in 0 sec".
+        if abs(date.timeIntervalSinceNow) < 60 {
+            return "just now"
+        }
+        return Self.relative.localizedString(for: date, relativeTo: Date())
     }
 }

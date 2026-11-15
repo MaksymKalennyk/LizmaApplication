@@ -2,6 +2,9 @@ import SwiftUI
 
 struct MusicConnectView: View {
     @StateObject private var viewModel = MusicConnectViewModel()
+    @ObservedObject private var musicStatus = MusicStatusStore.shared
+
+    private var spotifyConnected: Bool { musicStatus.status.spotifyConnected }
 
     var body: some View {
         List {
@@ -9,15 +12,28 @@ struct MusicConnectView: View {
                 HStack {
                     Label("Spotify", systemImage: "music.note")
                     Spacer()
-                    Image(systemName: viewModel.status.spotifyConnected ? "checkmark.circle.fill" : "xmark.circle")
-                        .foregroundStyle(viewModel.status.spotifyConnected ? .green : .secondary)
+                    if !musicStatus.isLoaded {
+                        if musicStatus.isLoading {
+                            ProgressView()
+                        } else {
+                            Text("Unknown").foregroundStyle(.secondary)
+                        }
+                    } else if spotifyConnected {
+                        HStack(spacing: 4) {
+                            Text("Connected")
+                            Image(systemName: "checkmark.circle.fill")
+                        }
+                        .foregroundStyle(.green)
+                    } else {
+                        Text("Not connected").foregroundStyle(.secondary)
+                    }
                 }
 
                 HStack {
                     Label("Apple Music", systemImage: "applelogo")
                     Spacer()
-                    Image(systemName: viewModel.status.appleConnected ? "checkmark.circle.fill" : "xmark.circle")
-                        .foregroundStyle(viewModel.status.appleConnected ? .green : .secondary)
+                    Image(systemName: musicStatus.status.appleConnected ? "checkmark.circle.fill" : "xmark.circle")
+                        .foregroundStyle(musicStatus.status.appleConnected ? .green : .secondary)
                 }
             }
 
@@ -25,27 +41,49 @@ struct MusicConnectView: View {
                 Button {
                     viewModel.connectSpotify()
                 } label: {
-                    Label("Connect Spotify", systemImage: "music.note")
+                    HStack {
+                        if spotifyConnected {
+                            Label("Reconnect Spotify", systemImage: "arrow.triangle.2.circlepath")
+                        } else {
+                            Label("Connect Spotify", systemImage: "music.note")
+                        }
+                        if viewModel.isConnectingSpotify {
+                            Spacer()
+                            ProgressView()
+                        }
+                    }
                 }
+                .disabled(viewModel.isConnectingSpotify)
 
                 Button {
                     viewModel.connectAppleMusic()
                 } label: {
-                    Label("Connect Apple Music", systemImage: "applelogo")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label("Connect Apple Music", systemImage: "applelogo")
+                        Text("Coming soon")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                // Apple Music isn't supported yet.
+                .disabled(true)
             } footer: {
-                Text("Connect at least one provider to be able to post and listen to full tracks.")
+                Text("Connect Spotify to search tracks and share them with your friends.")
             }
 
             if let err = viewModel.errorMessage {
                 Section {
                     Text(err).foregroundStyle(.red)
                 }
+            } else if let statusError = musicStatus.errorMessage {
+                Section {
+                    Text(statusError).foregroundStyle(.red)
+                }
             }
         }
         .navigationTitle("Music Accounts")
-        .task { await viewModel.reloadStatus() }
-        .refreshable { await viewModel.reloadStatus() }
+        .task { await musicStatus.refresh() }
+        .refreshable { await musicStatus.refresh() }
     }
 }
 

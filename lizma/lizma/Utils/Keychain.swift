@@ -10,13 +10,15 @@ enum KeychainError: Error {
 struct Keychain {
     static func set(_ value: String, forKey key: String) throws {
         guard let data = value.data(using: .utf8) else { throw KeychainError.dataEncodingFailed }
-        let query: [String: Any] = [
+        // Remove the old item with a plain lookup query (a query containing the data would not match it).
+        delete(key)
+        let attributes: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
-            kSecValueData as String: data
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
-        SecItemDelete(query as CFDictionary)
-        let status = SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(attributes as CFDictionary, nil)
         guard status == errSecSuccess else { throw KeychainError.unexpectedStatus(status) }
     }
 
