@@ -6,7 +6,7 @@ struct FriendsScreen: View {
     @State private var query: String = ""
     @State private var results: [UserDto] = []
     @State private var searching = false
-    /// One line under the search field: a hint (secondary) or an error (red).
+    /// One line at the top of the list: a hint (secondary) or an error (red).
     @State private var notice: Notice? = nil
     @State private var searchTask: Task<Void, Never>? = nil
     @State private var selfUsername: String? = nil
@@ -19,6 +19,8 @@ struct FriendsScreen: View {
 
     @State private var generatingLink = false
     @State private var sharePayload: SharePayload? = nil
+    @State private var reportTarget: ReportTarget? = nil
+    @State private var blockTarget: BlockTarget? = nil
 
     private var friendIDs: Set<Int64> {
         Set(vm.friends.map { $0.friendId })
@@ -35,44 +37,42 @@ struct FriendsScreen: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 8) {
-                TextField("Search by username", text: $query)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(.thinMaterial))
-                    .padding(.horizontal)
-                    .onChange(of: query) { _, newValue in
-                        scheduleSearch(for: newValue)
+            List {
+                if let notice {
+                    Section {
+                        Label(notice.text, systemImage: notice.isError ? "exclamationmark.triangle" : "info.circle")
+                            .font(.footnote)
+                            .foregroundStyle(notice.isError ? Color.red : Color.secondary)
                     }
+                }
 
                 if trimmedQuery.isEmpty {
-                    inviteRow
-                }
-
-                if searching { ProgressView().padding(.top, 4) }
-                if let notice {
-                    Text(notice.text)
-                        .font(.footnote)
-                        .foregroundStyle(notice.isError ? Color.red : Color.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-
-                Group {
-                    if !trimmedQuery.isEmpty {
-                        searchResults
-                    } else {
-                        friendsList
-                    }
+                    inviteSection
+                    friendsSection
+                } else {
+                    searchSection
                 }
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Friends")
+            .searchable(text: $query,
+                        placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Search by username")
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .onChange(of: query) { _, newValue in
+                scheduleSearch(for: newValue)
+            }
             .refreshable { await reloadAll() }
         }
         .sheet(item: $sharePayload) { payload in
             ShareSheet(activityItems: payload.items)
         }
+        .sheet(item: $reportTarget) { target in
+            ReportSheet(target: target)
+        }
+        // Blocking ends the friendship; `.friendsChanged` (posted after the block) reloads the list.
+        .blockConfirmation(target: $blockTarget)
         .task {
             await reloadAll()
         }
@@ -88,137 +88,178 @@ struct FriendsScreen: View {
     // MARK: - Content
 
     /// Invite links are single-use and short-lived, so every tap creates a new one.
-    private var inviteRow: some View {
-        HStack(spacing: 12) {
+    private var inviteSection: some View {
+        Section {
             Button {
                 createInviteLink()
             } label: {
-                HStack(spacing: 6) {
-                    if generatingLink {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Image(systemName: "link")
+                HStack(spacing: 12) {
+                    Image(systemName: "link")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(.tint.opacity(0.15)))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Share invite link")
+                            .font(.body.weight(.semibold))
+                        // `Color.secondary`: inside a button, `.secondary` is a paler tint.
+                        Text("Works once and expires in 7 days")
+                            .font(.caption)
+                            .foregroundStyle(Color.secondary)
                     }
-                    Text("Share invite link")
+
+                    Spacer(minLength: 8)
+
+                    if generatingLink {
+                        ProgressView()
+                    }
                 }
-                .font(.subheadline.weight(.semibold))
             }
-            .buttonStyle(.bordered)
             .disabled(generatingLink)
-            .accessibilityHint("Each link works once and expires in 7 days")
-
-            Text("Each link works once and expires in 7 days")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityHidden(true)
-        }
-        .padding(.horizontal)
-    }
-
-    @ViewBuilder
-    private var searchResults: some View {
-        if results.isEmpty && !searching {
-            ContentUnavailableView(
-                "No matches",
-                systemImage: "magnifyingglass",
-                description: Text("Try a different username")
-            )
-        } else {
-            List(results, id: \.id) { user in
-                userRow(user)
-            }
-            .listStyle(.insetGrouped)
         }
     }
 
     @ViewBuilder
-    private var friendsList: some View {
+    private var friendsSection: some View {
         if vm.loading && !vm.hasLoaded {
-            ProgressView().controlSize(.large).frame(maxHeight: .infinity)
+            placeholderRow { ProgressView() }
         } else if let err = vm.error, vm.friends.isEmpty {
-            // Scrollable so pull-to-refresh works on the empty/error states too.
-            ScrollView {
+            placeholderRow {
                 ContentUnavailableView(
-                    "Error",
+                    "Couldn't load friends",
                     systemImage: "exclamationmark.triangle",
                     description: Text(err)
                 )
-                .containerRelativeFrame(.vertical)
             }
         } else if vm.friends.isEmpty {
-            ScrollView {
+            placeholderRow {
                 ContentUnavailableView(
                     "No friends yet",
-                    systemImage: "person.2.slash",
-                    description: Text("Search above to add friends")
+                    systemImage: "person.2",
+                    description: Text("Search by username or share an invite link.")
                 )
-                .containerRelativeFrame(.vertical)
             }
         } else {
-            List(vm.friends) { f in
-                HStack {
-                    Circle()
-                        .frame(width: 36, height: 36)
-                        .opacity(0.1)
-                        .overlay(Text(String(f.friendUsername.prefix(1))).font(.headline))
-
-                    Text(f.friendUsername).font(.body).bold()
+            Section(vm.friends.count == 1 ? "1 friend" : "\(vm.friends.count) friends") {
+                ForEach(vm.friends) { friend in
+                    HStack(spacing: 12) {
+                        AvatarView(username: friend.friendUsername)
+                        Text(friend.friendUsername)
+                            .font(.body.weight(.medium))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    .contextMenu {
+                        Button {
+                            report(friend: friend)
+                        } label: {
+                            Label("Report user", systemImage: "exclamationmark.bubble")
+                        }
+                        Button(role: .destructive) {
+                            block(friend: friend)
+                        } label: {
+                            Label("Block user", systemImage: "hand.raised")
+                        }
+                    }
+                    // Not `.destructive`: that role animates the row away before the user confirms.
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button {
+                            block(friend: friend)
+                        } label: {
+                            Label("Block", systemImage: "hand.raised")
+                        }
+                        .tint(.red)
+                        Button {
+                            report(friend: friend)
+                        } label: {
+                            Label("Report", systemImage: "exclamationmark.bubble")
+                        }
+                        .tint(.orange)
+                    }
                 }
             }
-            .listStyle(.insetGrouped)
+        }
+    }
+
+    @ViewBuilder
+    private var searchSection: some View {
+        if results.isEmpty {
+            placeholderRow {
+                if searching {
+                    ProgressView()
+                } else {
+                    ContentUnavailableView.search(text: trimmedQuery)
+                }
+            }
+        } else {
+            Section {
+                ForEach(results) { user in
+                    userRow(user)
+                }
+            }
+        }
+    }
+
+    /// A row without the card background, for spinners and empty states inside the list.
+    private func placeholderRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        Section {
+            content()
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .listRowBackground(Color.clear)
         }
     }
 
     private func userRow(_ user: UserDto) -> some View {
-        let isFriend = friendIDs.contains(user.id)
-        let hasIncoming = incomingFromIDs.contains(user.id)
-        let hasOutgoing = outgoingToIDs.contains(user.id) || addedUserIDs.contains(user.id)
-        let isSending = sendingIDs.contains(user.id)
+        HStack(spacing: 12) {
+            AvatarView(username: user.username)
 
-        return HStack(spacing: 12) {
-            Circle()
-                .frame(width: 32, height: 32)
-                .opacity(0.1)
-                .overlay(Text(String(user.username.prefix(1))).font(.subheadline))
+            Text(user.username)
+                .font(.body.weight(.medium))
+                .lineLimit(1)
+                .truncationMode(.middle)
 
-            Text(user.username).bold()
+            Spacer(minLength: 8)
 
-            Spacer()
+            relationControl(for: user)
+        }
+    }
 
-            Button {
-                // Already connected: explain instead of sending a request the server would refuse.
-                if isFriend {
-                    notice = .info("\(user.username) is already your friend.")
-                } else if hasIncoming {
-                    notice = .info("\(user.username) has already sent you a request. Accept it in Profile.")
-                } else if hasOutgoing {
-                    notice = .info("You have already sent a friend request to \(user.username).")
-                } else {
-                    sendRequest(to: user)
-                }
-            } label: {
-                if isFriend {
-                    Image(systemName: "person.crop.circle.badge.checkmark").imageScale(.large)
-                        .foregroundStyle(.secondary)
-                } else if hasIncoming {
-                    Image(systemName: "arrow.down.circle").imageScale(.large)
-                        .foregroundStyle(.secondary)
-                } else if hasOutgoing {
-                    Image(systemName: "checkmark.circle.fill").imageScale(.large)
-                        .foregroundStyle(.secondary)
-                } else if isSending {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Image(systemName: "plus.circle.fill").imageScale(.large)
-                }
+    /// What the user can do with a search result, said in words rather than with an icon.
+    @ViewBuilder
+    private func relationControl(for user: UserDto) -> some View {
+        if friendIDs.contains(user.id) {
+            // Not a `Label`: in a list row that would pull the separator over to its text.
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark")
+                Text("Friends")
             }
-            .buttonStyle(.plain)
-            .disabled(isSending)
-            .accessibilityLabel(accessibilityLabelFor(user: user.username,
-                                                      friend: isFriend,
-                                                      incoming: hasIncoming,
-                                                      outgoing: hasOutgoing))
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .accessibilityElement(children: .combine)
+        } else if outgoingToIDs.contains(user.id) || addedUserIDs.contains(user.id) {
+            Text("Requested")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        } else if sendingIDs.contains(user.id) {
+            ProgressView().controlSize(.small)
+        } else if incomingFromIDs.contains(user.id) {
+            // They asked first: sending a request back makes you friends right away.
+            Button("Accept") {
+                sendRequest(to: user)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+            .accessibilityLabel("Accept \(user.username)'s friend request")
+        } else {
+            Button {
+                sendRequest(to: user)
+            } label: {
+                Label("Add", systemImage: "plus")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .accessibilityLabel("Add \(user.username)")
         }
     }
 
@@ -311,11 +352,12 @@ struct FriendsScreen: View {
         }
     }
 
-    private func accessibilityLabelFor(user: String, friend: Bool, incoming: Bool, outgoing: Bool) -> String {
-        if friend { return "\(user) is already your friend" }
-        if incoming { return "\(user) has already sent you a request" }
-        if outgoing { return "Request already sent to \(user)" }
-        return "Add \(user)"
+    private func report(friend: FriendshipDto) {
+        reportTarget = ReportTarget(type: .user, targetId: friend.friendId)
+    }
+
+    private func block(friend: FriendshipDto) {
+        blockTarget = BlockTarget(userId: friend.friendId, username: friend.friendUsername)
     }
 }
 
