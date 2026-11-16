@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @StateObject private var auth = AuthViewModel()
     @State private var inviteAlert: InviteAlert?
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Group {
@@ -11,6 +12,9 @@ struct RootView: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             } else {
                 AuthScreen()
+                    // Passed on explicitly: while this screen fades out after signing in, the feed
+                    // already makes the window dark, and without this the screen would flash dark.
+                    .environment(\.colorScheme, colorScheme)
                     .transition(.opacity)
             }
         }
