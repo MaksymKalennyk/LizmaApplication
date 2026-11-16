@@ -6,4 +6,7 @@ extension Notification.Name {
 
     /// The user published a post: the feed reloads from its first page.
     static let postCreated = Notification.Name("lizma.postCreated")
+
+    /// The Feed tab was tapped while it was already showing: the feed goes back to its newest post.
+    static let feedTabReselected = Notification.Name("lizma.feedTabReselected")
 }

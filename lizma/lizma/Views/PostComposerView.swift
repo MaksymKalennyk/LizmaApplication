@@ -232,19 +232,27 @@ struct PostComposerView: View {
         track.artists.map { $0.name }.joined(separator: ", ")
     }
 
+    private var artworkPlaceholder: some View {
+        ZStack {
+            Color(.systemGray5)
+            Image(systemName: "music.note").foregroundStyle(.secondary)
+        }
+    }
+
     private func artwork(of track: SpotifyTrack, side: CGFloat, cornerRadius: CGFloat) -> some View {
         Group {
             if let urlString = track.album.images?.first?.url, let url = URL(string: urlString) {
-                AsyncImage(url: url) { image in
+                RemoteImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color(.systemGray5)
+                } placeholder: { failed in
+                    if failed {
+                        artworkPlaceholder
+                    } else {
+                        Color(.systemGray5)
+                    }
                 }
             } else {
-                ZStack {
-                    Color(.systemGray5)
-                    Image(systemName: "music.note").foregroundStyle(.secondary)
-                }
+                artworkPlaceholder
             }
         }
         .frame(width: side, height: side)

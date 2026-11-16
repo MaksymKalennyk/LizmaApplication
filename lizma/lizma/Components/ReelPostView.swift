@@ -3,6 +3,8 @@ import SwiftUI
 /// One full-page post in the feed. The feed is always dark, whatever the system appearance is.
 struct ReelPostView: View {
     @Binding var post: PostResponse
+    /// The page runs up under the status bar; this keeps its content clear of it.
+    var contentInsets = EdgeInsets()
     let selfUsername: String?
     let onPlay: (String) -> Void
     let onReact: () -> Void
@@ -11,6 +13,7 @@ struct ReelPostView: View {
     let onBlock: () -> Void
 
     @State private var captionExpanded = false
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     /// Every action is this wide, so the column never shifts with the icons or the counts.
     private static let actionWidth: CGFloat = 52
@@ -23,34 +26,70 @@ struct ReelPostView: View {
         post.authorUsername == selfUsername
     }
 
+    private var artworkURL: URL? {
+        post.albumCoverUrl.flatMap { URL(string: $0) }
+    }
+
     var body: some View {
         GeometryReader { proxy in
-            // 75% of the page width, but never taller than half the page (landscape, small screens).
-            let coverSide = min(proxy.size.width * 0.75, proxy.size.height * 0.5)
-
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
-                cover(side: coverSide)
-
-                Spacer(minLength: 0)
-
-                HStack(alignment: .bottom, spacing: 12) {
-                    details
-                    actions
+            let usable = CGSize(width: max(0, proxy.size.width - contentInsets.leading - contentInsets.trailing),
+                                height: max(0, proxy.size.height - contentInsets.top - contentInsets.bottom))
+            Group {
+                if verticalSizeClass == .compact {
+                    sideBySide(usable: usable)
+                } else {
+                    stacked(usable: usable)
                 }
-                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
-                .padding(.horizontal)
-                .padding(.bottom, 24)
             }
+            .padding(contentInsets)
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .background(backdrop)
+        // Whatever doesn't fit must not spill into the posts above and below.
+        .clipped()
+    }
+
+    /// Portrait (and iPad): the cover on top, the author, caption and actions under it.
+    private func stacked(usable: CGSize) -> some View {
+        // 75% of the page width, but never taller than half the usable height (small screens).
+        let coverSide = max(0, min(usable.width * 0.75, usable.height * 0.5))
+        return VStack(spacing: 0) {
+            Spacer(minLength: 0)
+
+            cover(side: coverSide)
+
+            Spacer(minLength: 0)
+
+            HStack(alignment: .bottom, spacing: 12) {
+                details(captionLines: 3, expandedCaptionLines: 8)
+                actions(spacing: 18)
+            }
+            .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+            .padding(.horizontal)
+            .padding(.bottom, 16)
+        }
+    }
+
+    /// A phone in landscape is too low for that: the cover goes to the left, the rest beside it.
+    private func sideBySide(usable: CGSize) -> some View {
+        let coverSide = max(0, min(usable.height - 40, usable.width * 0.36))
+        return HStack(alignment: .center, spacing: 24) {
+            cover(side: coverSide)
+
+            Group {
+                details(captionLines: 2, expandedCaptionLines: 5)
+                actions(spacing: 8)
+            }
+            .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Author, caption, track
 
-    private var details: some View {
+    private func details(captionLines: Int, expandedCaptionLines: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 AvatarView(username: post.authorUsername, size: 34)
@@ -71,7 +110,7 @@ struct ReelPostView: View {
                 // Tap to read a long caption (still capped, so it can't push the cover off the page).
                 Text(caption)
                     .font(.subheadline)
-                    .lineLimit(captionExpanded ? 8 : 3)
+                    .lineLimit(captionExpanded ? expandedCaptionLines : captionLines)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.2)) { captionExpanded.toggle() }
@@ -105,8 +144,8 @@ struct ReelPostView: View {
 
     // MARK: - Actions
 
-    private var actions: some View {
-        VStack(spacing: 18) {
+    private func actions(spacing: CGFloat) -> some View {
+        VStack(spacing: spacing) {
             action("\(totalReactions)", perform: onReact) {
                 if let myReaction = post.currentUserReaction {
                     Text(myReaction)
@@ -183,14 +222,13 @@ struct ReelPostView: View {
 
     private func cover(side: CGFloat) -> some View {
         Group {
-            if let urlString = post.albumCoverUrl, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    case .failure:
+            if let url = artworkURL {
+                RemoteImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: { failed in
+                    if failed {
                         coverPlaceholder
-                    default:
+                    } else {
                         Rectangle().fill(.white.opacity(0.08))
                     }
                 }
@@ -216,24 +254,38 @@ struct ReelPostView: View {
         }
     }
 
+    /// The artwork, blurred and dimmed, fills the page behind the post.
     private var backdrop: some View {
-        Group {
-            if let urlString = post.albumCoverUrl, let url = URL(string: urlString) {
-                AsyncImage(url: url) { image in
-                    image.resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .blur(radius: 40)
-                        .opacity(0.4)
-                } placeholder: {
-                    Color(UIColor.darkGray)
+        Color.black
+            .overlay {
+                if let url = artworkURL {
+                    RemoteImage(url: url) { image in
+                        image.resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .blur(radius: 40)
+                            .opacity(0.4)
+                    } placeholder: { _ in
+                        Color(white: 0.12)
+                    }
+                } else {
+                    LinearGradient(colors: [AvatarView.color(for: post.authorUsername).opacity(0.45), .black],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
                 }
-            } else {
-                LinearGradient(colors: [AvatarView.color(for: post.authorUsername).opacity(0.45), .black],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
             }
-        }
-        .allowsHitTesting(false)
-        .ignoresSafeArea()
+            .clipped()
+            // Light artwork would wash out the status bar and the white text: darken the top edge and
+            // the lower part of the page, whatever the picture is. It ends in black, where the page
+            // meets the black strip the tab bar sits on.
+            .overlay {
+                LinearGradient(stops: [
+                    .init(color: .black.opacity(0.3), location: 0),
+                    .init(color: .clear, location: 0.16),
+                    .init(color: .clear, location: 0.5),
+                    .init(color: .black.opacity(0.6), location: 0.82),
+                    .init(color: .black, location: 1)
+                ], startPoint: .top, endPoint: .bottom)
+            }
+            .allowsHitTesting(false)
     }
 
     private var reactionAccessibilityLabel: String {

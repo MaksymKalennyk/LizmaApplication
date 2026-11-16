@@ -2,6 +2,8 @@ import SwiftUI
 
 struct FriendsScreen: View {
     @StateObject private var vm = FriendsViewModel()
+    /// Shared with the tab bar, which shows the number of incoming requests.
+    @EnvironmentObject private var requests: RequestsViewModel
 
     @State private var query: String = ""
     @State private var results: [UserDto] = []
@@ -10,9 +12,6 @@ struct FriendsScreen: View {
     @State private var notice: Notice? = nil
     @State private var searchTask: Task<Void, Never>? = nil
     @State private var selfUsername: String? = nil
-
-    @State private var received: [FriendRequestDto] = []
-    @State private var sent: [FriendRequestDto] = []
 
     @State private var sendingIDs: Set<Int64> = []
     @State private var addedUserIDs: Set<Int64> = []
@@ -26,10 +25,10 @@ struct FriendsScreen: View {
         Set(vm.friends.map { $0.friendId })
     }
     private var incomingFromIDs: Set<Int64> {
-        Set(received.map { $0.requesterId })
+        Set(requests.received.map { $0.requesterId })
     }
     private var outgoingToIDs: Set<Int64> {
-        Set(sent.map { $0.recipientId })
+        Set(requests.sent.map { $0.recipientId })
     }
     private var trimmedQuery: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -47,8 +46,10 @@ struct FriendsScreen: View {
                 }
 
                 if trimmedQuery.isEmpty {
+                    incomingRequestsSection
                     inviteSection
                     friendsSection
+                    sentRequestsSection
                 } else {
                     searchSection
                 }
@@ -86,6 +87,36 @@ struct FriendsScreen: View {
     }
 
     // MARK: - Content
+
+    /// Requests waiting for an answer come first: they are the one thing here that needs the user.
+    @ViewBuilder
+    private var incomingRequestsSection: some View {
+        if !requests.received.isEmpty {
+            Section("Friend requests") {
+                ForEach(requests.received) { request in
+                    IncomingRequestRow(request: request,
+                                       isBusy: requests.inFlight.contains(request.id),
+                                       accept: { Task { await requests.accept(request) } },
+                                       decline: { Task { await requests.reject(request) } })
+                        // A declined request can be sent again, so an unwanted sender can also be blocked.
+                        .modifier(SafetyActions(report: { report(userId: request.requesterId) },
+                                                block: { block(userId: request.requesterId,
+                                                               username: request.requesterUsername) }))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var sentRequestsSection: some View {
+        if !requests.sent.isEmpty {
+            Section("Sent requests") {
+                ForEach(requests.sent) { request in
+                    SentRequestRow(request: request)
+                }
+            }
+        }
+    }
 
     /// Invite links are single-use and short-lived, so every tap creates a new one.
     private var inviteSection: some View {
@@ -149,33 +180,9 @@ struct FriendsScreen: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
-                    .contextMenu {
-                        Button {
-                            report(friend: friend)
-                        } label: {
-                            Label("Report user", systemImage: "exclamationmark.bubble")
-                        }
-                        Button(role: .destructive) {
-                            block(friend: friend)
-                        } label: {
-                            Label("Block user", systemImage: "hand.raised")
-                        }
-                    }
-                    // Not `.destructive`: that role animates the row away before the user confirms.
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button {
-                            block(friend: friend)
-                        } label: {
-                            Label("Block", systemImage: "hand.raised")
-                        }
-                        .tint(.red)
-                        Button {
-                            report(friend: friend)
-                        } label: {
-                            Label("Report", systemImage: "exclamationmark.bubble")
-                        }
-                        .tint(.orange)
-                    }
+                    .modifier(SafetyActions(report: { report(userId: friend.friendId) },
+                                            block: { block(userId: friend.friendId,
+                                                           username: friend.friendUsername) }))
                 }
             }
         }
@@ -342,22 +349,47 @@ struct FriendsScreen: View {
     }
 
     private func loadRequests() async {
-        do {
-            async let rcv = FriendService.shared.listReceivedRequests()
-            async let snt = FriendService.shared.listSentRequests()
-            (received, sent) = try await (rcv, snt)
-        } catch {
-            guard !error.isCancellation else { return }
-            notice = .error(error.userMessage)
+        await requests.reload()
+        if let error = requests.error {
+            notice = .error(error)
         }
     }
 
-    private func report(friend: FriendshipDto) {
-        reportTarget = ReportTarget(type: .user, targetId: friend.friendId)
+    private func report(userId: Int64) {
+        reportTarget = ReportTarget(type: .user, targetId: userId)
     }
 
-    private func block(friend: FriendshipDto) {
-        blockTarget = BlockTarget(userId: friend.friendId, username: friend.friendUsername)
+    private func block(userId: Int64, username: String) {
+        blockTarget = BlockTarget(userId: userId, username: username)
+    }
+}
+
+/// Report and block for a row with another user: in the long-press menu and as swipe actions.
+private struct SafetyActions: ViewModifier {
+    let report: () -> Void
+    let block: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .contextMenu {
+                Button(action: report) {
+                    Label("Report user", systemImage: "exclamationmark.bubble")
+                }
+                Button(role: .destructive, action: block) {
+                    Label("Block user", systemImage: "hand.raised")
+                }
+            }
+            // Not `.destructive`: that role animates the row away before the user confirms.
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                Button(action: block) {
+                    Label("Block", systemImage: "hand.raised")
+                }
+                .tint(.red)
+                Button(action: report) {
+                    Label("Report", systemImage: "exclamationmark.bubble")
+                }
+                .tint(.orange)
+            }
     }
 }
 

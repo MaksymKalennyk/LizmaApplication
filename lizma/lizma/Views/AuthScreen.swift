@@ -200,6 +200,9 @@ struct AuthScreen: View {
 
     /// The server's answer was about the previous input, so it goes away once that input is edited.
     private func inputChanged() {
+        // Signing in clears the password; without this the screen would leave with a red
+        // "Password cannot be blank" on it.
+        guard !auth.isSignedIn else { return }
         if !auth.isLoading { auth.error = nil }
         validate()
     }
