@@ -42,8 +42,8 @@ final class AuthViewModel: ObservableObject {
         error = nil; notice = nil; isLoading = true
         do {
             try await action()
-            password = ""
             isSignedIn = true
+            password = ""
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
