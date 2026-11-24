@@ -12,12 +12,7 @@ struct BlockedUsersView: View {
         List {
             ForEach(users) { user in
                 HStack(spacing: 12) {
-                    AvatarView(username: user.username)
-
-                    Text(user.username)
-                        .font(.body.weight(.medium))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    UserLabel(username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl)
 
                     Spacer()
 
@@ -52,6 +47,7 @@ struct BlockedUsersView: View {
             }
         }
         .navigationTitle("Blocked users")
+        .navigationBarTitleDisplayMode(.inline) // the Ukrainian title is too long for a large one
         .task { await load() }
         .refreshable { await load() }
     }

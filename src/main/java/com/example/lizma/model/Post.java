@@ -45,6 +45,20 @@ public class Post {
     @Column(length = 1024)
     private String caption;
 
+    /** A 30-second preview anyone can play in the app (Apple's), when known. */
+    @Column(length = 512)
+    private String previewUrl;
+
+    /** The track in Apple Music and in Spotify, for "Open in …"; looked up after posting when missing. */
+    @Column(length = 512)
+    private String appleMusicUrl;
+
+    @Column(length = 512)
+    private String spotifyUrl;
+
+    /** When the other services' links were looked up (whatever the result); null until then. */
+    private Instant linksResolvedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();

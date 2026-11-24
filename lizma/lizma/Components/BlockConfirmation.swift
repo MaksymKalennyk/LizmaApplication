@@ -35,8 +35,8 @@ private struct BlockConfirmationModifier: ViewModifier {
 
     private var title: String {
         switch prompt {
-        case .confirm(let blocked)?: return "Block \(blocked.username)?"
-        case .failed?: return "Couldn't block user"
+        case .confirm(let blocked)?: return String(localized: "Block \(blocked.username)?", bundle: .app)
+        case .failed?: return String(localized: "Couldn't block user", bundle: .app)
         case nil: return ""
         }
     }

@@ -12,6 +12,8 @@ public class PostResponse {
     private Long id;
     private Long authorId;
     private String authorUsername;
+    private String authorDisplayName;
+    private String authorAvatarUrl;
     private String musicId;
     private MusicProvider musicProvider;
     private String trackName;
@@ -19,6 +21,9 @@ public class PostResponse {
     private String albumCoverUrl;
     private Instant createdAt;
     private String caption;
+    private String previewUrl;
+    private String appleMusicUrl;
+    private String spotifyUrl;
     
     private java.util.Map<String, Long> reactionsCount;
     private long commentsCount;

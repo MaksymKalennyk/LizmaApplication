@@ -11,15 +11,17 @@ struct LegalInfo: Decodable {
 struct BlockedUserDto: Decodable, Identifiable {
     let id: Int64
     let username: String
+    let displayName: String?
+    let avatarUrl: String?
 }
 
-enum ReportTargetType: String, Encodable {
+enum ReportTargetType: String, Codable {
     case post = "POST"
     case comment = "COMMENT"
     case user = "USER"
 }
 
-enum ReportReason: String, CaseIterable, Identifiable, Encodable {
+enum ReportReason: String, CaseIterable, Identifiable, Codable {
     case spam = "SPAM"
     case harassment = "HARASSMENT"
     case hate = "HATE"
@@ -31,12 +33,12 @@ enum ReportReason: String, CaseIterable, Identifiable, Encodable {
 
     var label: String {
         switch self {
-        case .spam: return "Spam or scam"
-        case .harassment: return "Harassment or bullying"
-        case .hate: return "Hate speech or symbols"
-        case .nudity: return "Nudity or sexual content"
-        case .violence: return "Violence or threats"
-        case .other: return "Something else"
+        case .spam: return String(localized: "Spam or scam", bundle: .app)
+        case .harassment: return String(localized: "Harassment or bullying", bundle: .app)
+        case .hate: return String(localized: "Hate speech or symbols", bundle: .app)
+        case .nudity: return String(localized: "Nudity or sexual content", bundle: .app)
+        case .violence: return String(localized: "Violence or threats", bundle: .app)
+        case .other: return String(localized: "Something else", bundle: .app)
         }
     }
 }

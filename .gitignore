@@ -27,3 +27,6 @@ lizma/build/
 
 # Local environment (secrets)
 .env
+
+# APNs keys (.p8) from the Apple Developer account
+*.p8

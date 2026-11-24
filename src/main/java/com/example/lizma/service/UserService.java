@@ -50,6 +50,16 @@ public class UserService {
         return userRepository.findByUsernameContainingIgnoreCaseAndBannedFalse(query, PageRequest.of(0, size));
     }
 
+    /** For moderators: users whose name contains the query, suspended ones included. */
+    public List<Users> searchIncludingSuspended(String query, int limit) {
+        return userRepository.findByUsernameContainingIgnoreCaseOrderByUsernameAsc(query, PageRequest.of(0, limit));
+    }
+
+    /** For moderators: suspended accounts, by name. */
+    public List<Users> suspended(int limit) {
+        return userRepository.findByBannedTrueOrderByUsernameAsc(PageRequest.of(0, limit));
+    }
+
     public boolean usernameExists(String username) {
         return userRepository.existsByUsername(username);
     }

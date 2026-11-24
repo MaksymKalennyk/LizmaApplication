@@ -1,5 +1,6 @@
 package com.example.lizma.model;
 
+import com.example.lizma.config.EncryptedStringConverter;
 import com.example.lizma.model.enums.MusicProvider;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,16 +22,20 @@ public class UserMusicAccount {
     @Column(nullable = false, length = 16)
     private MusicProvider provider;
 
-    @Column(name = "spotify_refresh_token", length = 512)
+    /** Encrypted in the database, like every token here (see TokenCipher). */
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "spotify_refresh_token", length = 1024)
     private String spotifyRefreshToken;
 
-    @Column(name = "spotify_access_token", length = 512)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "spotify_access_token", length = 1024)
     private String spotifyAccessToken;
 
     @Column(name = "spotify_access_token_expires_at")
     private Instant spotifyAccessTokenExpiresAt;
 
-    @Column(length = 512) private String appleUserToken;
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(length = 1024) private String appleUserToken;
     @Column(length = 8) private String appleStorefront;
 
     private Instant connectedAt;

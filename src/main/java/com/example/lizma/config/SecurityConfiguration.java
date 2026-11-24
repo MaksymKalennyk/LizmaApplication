@@ -40,6 +40,7 @@ public class SecurityConfiguration {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserService userService;
     private final ObjectMapper objectMapper;
+    private final MessageTranslator translator;
 
     /** Public invite pages live under this prefix: GET /i/{token}. */
     @Value("${app.invites.pathPrefix:/i}")
@@ -59,6 +60,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/auth/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/legal", "/privacy", "/terms").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/avatars/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, invitesPathPrefix + "/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -67,11 +69,11 @@ public class SecurityConfiguration {
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, ex) -> writeError(response, HttpStatus.UNAUTHORIZED,
-                                request.getAttribute(JwtAuthenticationFilter.INVALID_TOKEN_ATTRIBUTE) != null
+                                translator.translate(request.getAttribute(JwtAuthenticationFilter.INVALID_TOKEN_ATTRIBUTE) != null
                                         ? "Session expired, please sign in again"
-                                        : "Authentication required"))
+                                        : "Authentication required", request.getLocale())))
                         .accessDeniedHandler((request, response, ex) ->
-                                writeError(response, HttpStatus.FORBIDDEN, "Access denied")))
+                                writeError(response, HttpStatus.FORBIDDEN, translator.translate("Access denied", request.getLocale()))))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

@@ -4,6 +4,9 @@ struct PostResponse: Codable, Identifiable {
     let id: Int
     let authorId: Int
     let authorUsername: String
+    /// Changeable here so your own posts can follow an edited name or photo without reloading.
+    var authorDisplayName: String?
+    var authorAvatarUrl: String?
     let musicId: String
     let musicProvider: String
     let trackName: String
@@ -11,12 +14,17 @@ struct PostResponse: Codable, Identifiable {
     let albumCoverUrl: String?
     let createdAt: String
     let caption: String?
+    /// A 30-second preview anyone can play; the track in Apple Music and in Spotify.
+    let previewUrl: String?
+    let appleMusicUrl: String?
+    let spotifyUrl: String?
     var reactionsCount: [String: Int]
     var commentsCount: Int
     var currentUserReaction: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, authorId, authorUsername, musicId, musicProvider, trackName, artistName, albumCoverUrl, createdAt, caption, reactionsCount, commentsCount
+        case id, authorId, authorUsername, authorDisplayName, authorAvatarUrl, musicId, musicProvider, trackName, artistName,
+             albumCoverUrl, createdAt, caption, previewUrl, appleMusicUrl, spotifyUrl, reactionsCount, commentsCount
         case currentUserReaction
     }
 }
@@ -28,12 +36,16 @@ struct PostRequest: Codable {
     let artistName: String
     let albumCoverUrl: String?
     let caption: String?
+    let previewUrl: String?
+    let appleMusicUrl: String?
 }
 
 struct CommentResponse: Codable, Identifiable {
     let id: Int
     let authorId: Int
     let authorUsername: String
+    let authorDisplayName: String?
+    let authorAvatarUrl: String?
     let content: String
     let createdAt: String
     let parentId: Int?
@@ -42,7 +54,7 @@ struct CommentResponse: Codable, Identifiable {
     var replies: [CommentResponse]?
     
     enum CodingKeys: String, CodingKey {
-        case id, authorId, authorUsername, content, createdAt, parentId, likesCount, replies
+        case id, authorId, authorUsername, authorDisplayName, authorAvatarUrl, content, createdAt, parentId, likesCount, replies
         case isLikedByCurrentUser = "likedByCurrentUser"
     }
 }
@@ -55,6 +67,8 @@ struct CommentRequest: Codable {
 struct ReactionDetailResponse: Codable, Identifiable {
     let authorId: Int
     let authorUsername: String
+    let authorDisplayName: String?
+    let authorAvatarUrl: String?
     let type: String
     let createdAt: String?
     
@@ -63,21 +77,3 @@ struct ReactionDetailResponse: Codable, Identifiable {
     }
 }
 
-struct SpotifyTrack: Codable, Identifiable {
-    let id: String
-    let name: String
-    let album: SpotifyAlbum
-    let artists: [SpotifyArtist]
-}
-
-struct SpotifyAlbum: Codable {
-    let images: [SpotifyImage]?
-}
-
-struct SpotifyArtist: Codable {
-    let name: String
-}
-
-struct SpotifyImage: Codable {
-    let url: String
-}

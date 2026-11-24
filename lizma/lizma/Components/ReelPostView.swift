@@ -6,13 +6,19 @@ struct ReelPostView: View {
     /// The page runs up under the status bar; this keeps its content clear of it.
     var contentInsets = EdgeInsets()
     let selfUsername: String?
-    let onPlay: (String) -> Void
+    /// Opens the track: preview here, the whole song in Apple Music or Spotify.
+    let onPlay: () -> Void
     let onReact: () -> Void
     let onComment: () -> Void
     let onReport: () -> Void
     let onBlock: () -> Void
+    /// Offered on the user's own posts instead of report and block; called once the user confirmed.
+    var onDelete: () -> Void = {}
+    /// Tapping the author's photo or name; nil where the profile is already open behind.
+    var onOpenProfile: (() -> Void)? = nil
 
     @State private var captionExpanded = false
+    @State private var isConfirmingDelete = false
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     /// Every action is this wide, so the column never shifts with the icons or the counts.
@@ -89,15 +95,29 @@ struct ReelPostView: View {
 
     // MARK: - Author, caption, track
 
+    private var author: some View {
+        HStack(spacing: 8) {
+            AvatarView(username: post.authorUsername, imageURL: post.authorAvatarUrl, size: 34)
+            Text(post.authorName)
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .contentShape(Rectangle())
+    }
+
     private func details(captionLines: Int, expandedCaptionLines: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                AvatarView(username: post.authorUsername, size: 34)
-
-                Text(post.authorUsername)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                if let onOpenProfile {
+                    Button(action: onOpenProfile) {
+                        author
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Opens the profile")
+                } else {
+                    author
+                }
 
                 Text(RelativeTime.string(from: post.createdAt))
                     .font(.footnote)
@@ -167,7 +187,7 @@ struct ReelPostView: View {
             .accessibilityLabel("Comments")
             .accessibilityValue("\(post.commentsCount)")
 
-            action("Play", perform: playTrack) {
+            action(String(localized: "Play", bundle: .app), perform: playTrack) {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 34))
                     .symbolRenderingMode(.palette)
@@ -175,8 +195,14 @@ struct ReelPostView: View {
             }
             .accessibilityLabel("Play track")
 
-            if !isOwnPost {
-                Menu {
+            Menu {
+                if isOwnPost {
+                    Button(role: .destructive) {
+                        isConfirmingDelete = true
+                    } label: {
+                        Label("Delete post", systemImage: "trash")
+                    }
+                } else {
                     Button {
                         onReport()
                     } label: {
@@ -187,14 +213,21 @@ struct ReelPostView: View {
                     } label: {
                         Label("Block \(post.authorUsername)", systemImage: "hand.raised")
                     }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: Self.actionWidth, height: 44)
-                        .contentShape(Rectangle())
                 }
-                .accessibilityLabel("More options")
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: Self.actionWidth, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("More options")
+            // Attached to the button, so the question comes out of the "⋯" that was tapped.
+            .confirmationDialog("Delete this post?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+                Button("Delete post", role: .destructive, action: onDelete)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Its comments and reactions are deleted too. This can't be undone.")
             }
         }
     }
@@ -289,19 +322,12 @@ struct ReelPostView: View {
     }
 
     private var reactionAccessibilityLabel: String {
-        if isOwnPost { return "See who reacted" }
-        if let myReaction = post.currentUserReaction { return "Change your reaction \(myReaction)" }
-        return "React"
+        if isOwnPost { return String(localized: "See who reacted", bundle: .app) }
+        if let myReaction = post.currentUserReaction { return String(localized: "Change your reaction \(myReaction)", bundle: .app) }
+        return String(localized: "React", bundle: .app)
     }
 
     private func playTrack() {
-        if post.musicProvider == "SPOTIFY" {
-            let pureId = post.musicId.replacingOccurrences(of: "spotify:track:", with: "")
-            onPlay(pureId)
-        } else {
-            if let url = URL(string: post.musicId) {
-                UIApplication.shared.open(url)
-            }
-        }
+        onPlay()
     }
 }

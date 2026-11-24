@@ -5,10 +5,18 @@ struct CommentRowView: View {
     let isReply: Bool
     /// Report/block are only offered on other people's comments.
     let selfUsername: String?
+    /// The user wrote the post: they may delete any comment under it, not only their own.
+    let canDeleteAnyComment: Bool
     let onReply: (CommentResponse) -> Void
     let onLike: (Int) -> Void
     let onReport: (CommentResponse) -> Void
     let onBlock: (CommentResponse) -> Void
+    /// Called once the user confirmed the deletion.
+    let onDelete: (CommentResponse) -> Void
+    /// Tapping the author's photo or name.
+    var onOpenProfile: (String) -> Void = { _ in }
+
+    @State private var isConfirmingDelete = false
 
     static let avatarSize: CGFloat = 36
     static let replyAvatarSize: CGFloat = 28
@@ -20,13 +28,11 @@ struct CommentRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            if isOwnComment {
-                commentRow
-            } else {
-                // Only on this comment's own row, so a reply's menu targets the reply.
-                commentRow
-                    .contentShape(Rectangle())
-                    .contextMenu {
+            // Only on this comment's own row, so a reply's menu targets the reply.
+            commentRow
+                .contentShape(Rectangle())
+                .contextMenu {
+                    if !isOwnComment {
                         Button {
                             onReport(comment)
                         } label: {
@@ -38,7 +44,26 @@ struct CommentRowView: View {
                             Label("Block \(comment.authorUsername)", systemImage: "hand.raised")
                         }
                     }
-            }
+                    if isOwnComment || canDeleteAnyComment {
+                        if !isOwnComment { Divider() }
+                        Button(role: .destructive) {
+                            isConfirmingDelete = true
+                        } label: {
+                            Label("Delete comment", systemImage: "trash")
+                        }
+                    }
+                }
+                // Attached to the row, so the question comes out of the comment it is about.
+                .confirmationDialog("Delete this comment?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+                    Button("Delete comment", role: .destructive) { onDelete(comment) }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    if comment.replies?.isEmpty == false {
+                        Text("Its replies are deleted too. This can't be undone.")
+                    } else {
+                        Text("This can't be undone.")
+                    }
+                }
 
             if let replies = comment.replies, !replies.isEmpty {
                 ForEach(Binding(get: { replies }, set: { comment.replies = $0 })) { $reply in
@@ -46,10 +71,13 @@ struct CommentRowView: View {
                         comment: $reply,
                         isReply: true,
                         selfUsername: selfUsername,
+                        canDeleteAnyComment: canDeleteAnyComment,
                         onReply: onReply,
                         onLike: onLike,
                         onReport: onReport,
-                        onBlock: onBlock
+                        onBlock: onBlock,
+                        onDelete: onDelete,
+                        onOpenProfile: onOpenProfile
                     )
                     // Replies start where the parent's text starts.
                     .padding(.leading, Self.avatarSize + Self.avatarSpacing)
@@ -60,15 +88,27 @@ struct CommentRowView: View {
 
     private var commentRow: some View {
         HStack(alignment: .top, spacing: Self.avatarSpacing) {
-            AvatarView(username: comment.authorUsername,
-                       size: isReply ? Self.replyAvatarSize : Self.avatarSize)
+            Button {
+                onOpenProfile(comment.authorUsername)
+            } label: {
+                AvatarView(username: comment.authorUsername, imageURL: comment.authorAvatarUrl,
+                           size: isReply ? Self.replyAvatarSize : Self.avatarSize)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(comment.authorName)'s profile")
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(comment.authorUsername)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    Button {
+                        onOpenProfile(comment.authorUsername)
+                    } label: {
+                        Text(comment.authorName)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.primary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    .buttonStyle(.plain)
                     Text(RelativeTime.string(from: comment.createdAt))
                         .font(.caption)
                         .foregroundStyle(.secondary)

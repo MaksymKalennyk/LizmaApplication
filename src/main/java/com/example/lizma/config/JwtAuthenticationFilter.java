@@ -1,5 +1,6 @@
 package com.example.lizma.config;
 
+import com.example.lizma.model.Users;
 import com.example.lizma.service.JwtService;
 import com.example.lizma.service.UserService;
 import io.jsonwebtoken.JwtException;
@@ -48,9 +49,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(BEARER_PREFIX.length()).trim();
         try {
-            String username = jwtService.extractUserName(jwt);
-            UserDetails userDetails = userService.userDetailsService().loadUserByUsername(username);
-            if (!userDetails.isEnabled()) { // suspended by a moderator: the token stops working
+            JwtService.TokenClaims claims = jwtService.parse(jwt);
+            UserDetails userDetails = userService.userDetailsService().loadUserByUsername(claims.username());
+            // The name alone isn't enough: a deleted account's name can be taken by a new one, which must
+            // not inherit the old account's tokens.
+            boolean sameAccount = userDetails instanceof Users user && user.getId().equals(claims.userId());
+            if (!sameAccount || !userDetails.isEnabled()) { // suspended by a moderator: the token stops working
                 request.setAttribute(INVALID_TOKEN_ATTRIBUTE, Boolean.TRUE);
                 filterChain.doFilter(request, response);
                 return;
