@@ -22,6 +22,13 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
             """)
     boolean existsBetween(@Param("a") Users a, @Param("b") Users b, @Param("status") FriendshipStatus status);
 
+    /** Ids of the user's confirmed friends, without loading the friendships. */
+    @Query("""
+            select case when f.user1.id = :userId then f.user2.id else f.user1.id end from Friendship f
+            where f.status = :status and (f.user1.id = :userId or f.user2.id = :userId)
+            """)
+    List<Long> findFriendIds(@Param("userId") Long userId, @Param("status") FriendshipStatus status);
+
     @Modifying
     @Query("delete from Friendship f where (f.user1 = :a and f.user2 = :b) or (f.user1 = :b and f.user2 = :a)")
     void deleteBetween(@Param("a") Users a, @Param("b") Users b);

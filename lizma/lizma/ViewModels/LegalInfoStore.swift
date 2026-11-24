@@ -21,6 +21,11 @@ final class LegalInfoStore: ObservableObject {
         return URL(string: "mailto:\(email)")
     }
 
+    /// The links carry the language they were fetched in: after a language change they're fetched again.
+    func reset() {
+        info = nil
+    }
+
     func loadIfNeeded() async {
         guard info == nil else { return }
         if let loadTask {

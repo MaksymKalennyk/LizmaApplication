@@ -43,6 +43,16 @@ public class MusicAccountService {
         repo.save(account);
     }
 
+    /**
+     * Forgets the user's Spotify tokens. Spotify has no API to revoke them; the user can also remove the app
+     * at spotify.com/account/apps. Safe to call when nothing is connected.
+     */
+    @Transactional
+    public void disconnectSpotify(Long userId) {
+        Users user = userService.getById(userId);
+        repo.findByUserAndProvider(user, MusicProvider.SPOTIFY).ifPresent(repo::delete);
+    }
+
     @Transactional
     public void connectApple(Long userId, String userToken, String storefront) {
         UserMusicAccount account = findOrCreate(userId, MusicProvider.APPLE);

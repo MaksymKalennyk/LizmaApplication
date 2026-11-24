@@ -34,6 +34,17 @@ final class FriendService {
                                             query: [URLQueryItem(name: "status", value: status.rawValue)])
     }
 
+    /// Takes back a request the user sent that hasn't been answered yet.
+    func cancelRequest(_ requestId: Int64) async throws {
+        _ = try await APIClient.shared.send(MessageResponse.self, path: "/user/friend-requests/\(requestId)", method: "DELETE")
+    }
+
+    /// Ends the friendship (the other person isn't told). Either side can send a new request later.
+    func removeFriend(username: String) async throws {
+        let segment = username.addingPercentEncoding(withAllowedCharacters: .urlPathSegmentAllowed) ?? username
+        _ = try await APIClient.shared.send(MessageResponse.self, path: "/user/friends/\(segment)", method: "DELETE")
+    }
+
     /// Creates a new single-use invite link (every call makes a fresh one; it expires after 7 days).
     func createInvite() async throws -> InviteLinkDto {
         try await APIClient.shared.send(InviteLinkDto.self,

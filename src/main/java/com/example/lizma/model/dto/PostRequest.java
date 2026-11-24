@@ -28,4 +28,11 @@ public class PostRequest {
 
     @Size(max = 1024, message = "Caption must be at most 1024 characters")
     private String caption;
+
+    /** From the catalog search: the 30-second preview and the track's Apple Music page. */
+    @Size(max = 512, message = "Preview URL is too long")
+    private String previewUrl;
+
+    @Size(max = 512, message = "Apple Music URL is too long")
+    private String appleMusicUrl;
 }

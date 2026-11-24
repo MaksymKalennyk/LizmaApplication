@@ -1,6 +1,7 @@
 package com.example.lizma.service;
 
 import com.example.lizma.model.Users;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -22,7 +23,7 @@ public class JwtService {
     private final Duration tokenTtl;
 
     public JwtService(@Value("${token.signing.key}") String signingKey,
-                      @Value("${token.ttl:7d}") Duration tokenTtl) {
+                      @Value("${token.ttl:15m}") Duration tokenTtl) {
         this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(signingKey));
         this.tokenTtl = tokenTtl;
     }
@@ -39,17 +40,27 @@ public class JwtService {
         return builder.signWith(signingKey).compact();
     }
 
+    /** Seconds a new access token stays valid; the app refreshes it shortly before. */
+    public long ttlSeconds() {
+        return tokenTtl.toSeconds();
+    }
+
+    /** Who a valid token was issued to. {@code userId} is null in tokens issued before it was added. */
+    public record TokenClaims(String username, Long userId) {
+    }
+
     /**
-     * Returns the username stored in a valid token.
+     * Reads a valid token.
      *
      * @throws JwtException if the token is malformed, tampered with or expired
      */
-    public String extractUserName(String token) {
-        return Jwts.parser()
+    public TokenClaims parse(String token) {
+        Claims claims = Jwts.parser()
                 .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .getPayload();
+        Number id = claims.get("id", Number.class);
+        return new TokenClaims(claims.getSubject(), id == null ? null : id.longValue());
     }
 }

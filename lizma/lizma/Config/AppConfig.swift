@@ -13,12 +13,10 @@ enum AppConfig {
         return "http://localhost:8080"
     }()
 
-    static let spotifyClientId = "886cea2ad68346a597acede21adaf379"
-    /// Must be registered exactly like this in the Spotify Developer Dashboard (Redirect URIs).
-    static let spotifyRedirectUri = "lizma://oauth-callback/spotify"
-    /// Read-only permissions asked on "Connect Spotify". Search itself needs none.
-    static let spotifyScopes = [
-        "user-read-currently-playing",
-        "user-read-playback-state"
-    ]
+    /// Profile photos come as paths on our server ("/avatars/…"); covers are full URLs already.
+    static func mediaURL(_ path: String?) -> URL? {
+        guard let path, !path.isEmpty else { return nil }
+        return path.hasPrefix("/") ? URL(string: apiBaseURL + path) : URL(string: path)
+    }
+
 }

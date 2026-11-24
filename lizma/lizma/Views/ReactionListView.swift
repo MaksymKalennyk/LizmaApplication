@@ -28,18 +28,18 @@ struct ReactionListView: View {
                     )
                 } else {
                     List(reactions) { reaction in
-                        HStack(spacing: 12) {
-                            AvatarView(username: reaction.authorUsername, size: 40)
+                        NavigationLink {
+                            UserProfileScreen(username: reaction.authorUsername)
+                        } label: {
+                            HStack(spacing: 12) {
+                                UserLabel(username: reaction.authorUsername, displayName: reaction.authorDisplayName,
+                                          avatarUrl: reaction.authorAvatarUrl, size: 40)
 
-                            Text(reaction.authorUsername)
-                                .font(.body.weight(.semibold))
-                                .lineLimit(1)
-                                .truncationMode(.middle)
+                                Spacer(minLength: 8)
 
-                            Spacer(minLength: 8)
-
-                            Text(reaction.type)
-                                .font(.system(size: 24))
+                                Text(reaction.type)
+                                    .font(.system(size: 24))
+                            }
                         }
                         .padding(.vertical, 2)
                         .listRowBackground(Color.clear)

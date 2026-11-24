@@ -3,6 +3,7 @@ package com.example.lizma;
 import com.example.lizma.model.FriendInvite;
 import com.example.lizma.repo.FriendInviteRepository;
 import com.example.lizma.repo.UserRepository;
+import com.example.lizma.service.ContentCleanupService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,8 @@ class ApiIntegrationTest {
     private ObjectMapper objectMapper;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ContentCleanupService cleanupService;
     @Autowired
     private FriendInviteRepository inviteRepository;
 
@@ -96,7 +99,7 @@ class ApiIntegrationTest {
     void tokenOfDeletedUserIsRejectedButDoesNotBreakSignIn() throws Exception {
         User ghost = newUser();
         User other = newUser();
-        userRepository.deleteById(ghost.id());
+        cleanupService.deleteUser(ghost.id());
 
         as(ghost, get("/user/friends")).andExpect(status().isUnauthorized());
         mvc.perform(post("/auth/sign-in").header("Authorization", "Bearer " + ghost.token())
@@ -263,7 +266,8 @@ class ApiIntegrationTest {
 
         as(bob, post("/user/friend-invites/accept-by-username/" + alice.name())).andExpect(status().isNotFound());
         as(bob, post("/user/friend-invites/vanity-link")).andExpect(status().isNotFound());
-        as(alice, post("/user/friend-requests/generate-link")).andExpect(status().isNotFound());
+        // The path now belongs to DELETE /user/friend-requests/{id} (cancel), so a POST is refused.
+        as(alice, post("/user/friend-requests/generate-link")).andExpect(status().isMethodNotAllowed());
         mvc.perform(get("/" + alice.name())).andExpect(status().isUnauthorized());
         as(bob, get("/user/friends")).andExpect(jsonPath("$", hasSize(0)));
     }

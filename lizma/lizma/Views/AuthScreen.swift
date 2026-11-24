@@ -210,7 +210,7 @@ struct AuthScreen: View {
     private func validate() {
         let u = auth.username.trimmingCharacters(in: .whitespacesAndNewlines)
         if u.isEmpty {
-            usernameError = "Username cannot be blank"
+            usernameError = String(localized: "Username cannot be blank", bundle: .app)
         } else if !UsernameValidator.lengthRange.contains(u.count) {
             usernameError = UsernameValidator.lengthMessage
         } else if !isSignIn && !UsernameValidator.hasOnlyAllowedCharacters(u) {
@@ -222,9 +222,9 @@ struct AuthScreen: View {
 
         let p = auth.password
         if p.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            passwordError = "Password cannot be blank"
+            passwordError = String(localized: "Password cannot be blank", bundle: .app)
         } else if p.count < passwordMin || p.count > passwordMax {
-            passwordError = "Password length must be between \(passwordMin) and \(passwordMax) characters"
+            passwordError = String(localized: "Password length must be between \(passwordMin) and \(passwordMax) characters", bundle: .app)
         } else {
             passwordError = nil
         }

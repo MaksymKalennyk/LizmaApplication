@@ -12,8 +12,25 @@ final class PostService {
                                                        URLQueryItem(name: "size", value: String(size))])
     }
 
+    /// One post (yours or a friend's), e.g. the one a notification is about.
+    func getPost(postId: Int) async throws -> PostResponse {
+        try await APIClient.shared.send(PostResponse.self, path: "/posts/\(postId)")
+    }
+
     func createPost(_ req: PostRequest) async throws -> PostResponse {
         return try await APIClient.shared.send(PostResponse.self, path: "/posts", method: "POST", body: req)
+    }
+
+    /// Deletes the user's own post with its comments and reactions.
+    func deletePost(postId: Int) async throws {
+        _ = try await APIClient.shared.send(MessageResponse.self, path: "/posts/\(postId)", method: "DELETE")
+    }
+
+    /// Deletes a comment (a top-level one with its replies): the user's own, or any comment on their post.
+    func deleteComment(postId: Int, commentId: Int) async throws {
+        _ = try await APIClient.shared.send(MessageResponse.self,
+                                            path: "/posts/\(postId)/comments/\(commentId)",
+                                            method: "DELETE")
     }
 
     func reactToPost(postId: Int, type: String) async throws {

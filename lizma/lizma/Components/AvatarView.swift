@@ -1,21 +1,39 @@
 import SwiftUI
 
-/// The round badge with a user's initial, used wherever a user is shown. The colour comes from
-/// the username, so the same person looks the same on every screen.
+/// A user's round picture, used wherever a user is shown: their profile photo, or a badge with their
+/// initial while there is none (or it is loading). The badge colour comes from the username, so the
+/// same person looks the same on every screen.
 struct AvatarView: View {
     let username: String
+    /// The profile photo, as the server gives it ("/avatars/…"); nil shows the initial.
+    var imageURL: String? = nil
     var size: CGFloat = 36
 
     var body: some View {
+        Group {
+            if let url = AppConfig.mediaURL(imageURL) {
+                RemoteImage(url: url) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: { _ in
+                    initialBadge
+                }
+            } else {
+                initialBadge
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .accessibilityHidden(true)
+    }
+
+    private var initialBadge: some View {
         Circle()
             .fill(Self.color(for: username).gradient)
-            .frame(width: size, height: size)
             .overlay(
                 Text(Self.initial(of: username))
                     .font(.system(size: size * 0.44, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
             )
-            .accessibilityHidden(true)
     }
 
     /// The first letter or digit, uppercased (usernames may start with "_", "." or "-").

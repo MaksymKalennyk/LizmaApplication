@@ -37,6 +37,22 @@ final class RequestsViewModel: ObservableObject {
         await respond(request, status: FriendRequestStatus.declined)
     }
 
+    /// The user takes back a request they sent.
+    func cancel(_ request: FriendRequestDto) async {
+        guard !inFlight.contains(request.id) else { return }
+        inFlight.insert(request.id)
+        defer { inFlight.remove(request.id) }
+        do {
+            try await FriendService.shared.cancelRequest(request.id)
+            error = nil
+            sent.removeAll { $0.id == request.id }
+        } catch {
+            guard !error.isCancellation else { return }
+            self.error = error.userMessage
+        }
+        await reload()
+    }
+
     private func respond(_ request: FriendRequestDto, status: FriendRequestStatus) async {
         guard !inFlight.contains(request.id) else { return }
         inFlight.insert(request.id)

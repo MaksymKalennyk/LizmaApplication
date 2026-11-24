@@ -27,6 +27,10 @@ struct RootView: View {
         // is accepted right after signing in or up.
         .task(id: auth.isSignedIn) {
             await acceptPendingIfAny()
+            // Asks for notifications once; afterwards keeps this phone's token with the signed-in user.
+            if auth.isSignedIn {
+                await PushManager.shared.start()
+            }
         }
         .alert(inviteAlert?.title ?? "", isPresented: isShowingInviteAlert, presenting: inviteAlert) { _ in
             Button("OK", role: .cancel) {}
@@ -57,7 +61,7 @@ struct RootView: View {
         do {
             // "Friendship established" or "You are already friends".
             let message = try await FriendService.shared.acceptInvite(token: token)
-            inviteAlert = InviteAlert(title: "Friend invite", message: message)
+            inviteAlert = InviteAlert(title: String(localized: "Friend invite", bundle: .app), message: message)
             NotificationCenter.default.post(name: .friendsChanged, object: nil)
         } catch {
             if error.isCancellation || isSessionExpiry(error) {
@@ -68,12 +72,12 @@ struct RootView: View {
             if error is URLError {
                 // Offline or server unreachable: the invite is still valid, retry on the next launch.
                 DeepLink.storePendingInvite(token)
-                inviteAlert = InviteAlert(title: "Couldn't accept invite",
-                                          message: "\(error.userMessage) We'll try again the next time you open Lizma.")
+                inviteAlert = InviteAlert(title: String(localized: "Couldn't accept invite", bundle: .app),
+                                          message: String(localized: "\(error.userMessage) We'll try again the next time you open Lizma.", bundle: .app))
                 return
             }
             // Used, expired, unknown or your own link: the server's message says which.
-            inviteAlert = InviteAlert(title: "Couldn't accept invite", message: error.userMessage)
+            inviteAlert = InviteAlert(title: String(localized: "Couldn't accept invite", bundle: .app), message: error.userMessage)
         }
     }
 

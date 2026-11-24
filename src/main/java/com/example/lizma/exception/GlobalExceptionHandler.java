@@ -1,8 +1,10 @@
 package com.example.lizma.exception;
 
+import com.example.lizma.config.MessageTranslator;
 import com.example.lizma.model.dto.ApiError;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    /** Messages leave in the app's language (Accept-Language); see {@link MessageTranslator}. */
+    private final MessageTranslator translator;
+
+    public GlobalExceptionHandler(MessageTranslator translator) {
+        this.translator = translator;
+    }
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiError> handleApiException(ApiException ex) {
@@ -62,7 +71,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .findFirst()
                 .map(FieldError::getDefaultMessage)
                 .orElse("Validation error");
-        return new ResponseEntity<>(new ApiError(message), headers, status);
+        return new ResponseEntity<>(new ApiError(localized(message)), headers, status);
     }
 
     @Override
@@ -73,7 +82,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             String field = invalid.getPath().get(invalid.getPath().size() - 1).getFieldName();
             message = "Invalid value for field '" + field + "'";
         }
-        return new ResponseEntity<>(new ApiError(message), headers, status);
+        return new ResponseEntity<>(new ApiError(localized(message)), headers, status);
     }
 
     @Override
@@ -88,10 +97,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatus status = HttpStatus.resolve(statusCode.value());
             message = status != null ? status.getReasonPhrase() : "Error";
         }
-        return new ResponseEntity<>(new ApiError(message), headers, statusCode);
+        return new ResponseEntity<>(new ApiError(localized(message)), headers, statusCode);
     }
 
-    private static ResponseEntity<ApiError> error(HttpStatusCode status, String message) {
-        return ResponseEntity.status(status).body(new ApiError(message));
+    private ResponseEntity<ApiError> error(HttpStatusCode status, String message) {
+        return ResponseEntity.status(status).body(new ApiError(localized(message)));
+    }
+
+    private String localized(String message) {
+        return translator.translate(message, LocaleContextHolder.getLocale());
     }
 }

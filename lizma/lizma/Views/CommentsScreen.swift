@@ -4,8 +4,12 @@ struct CommentsScreen: View {
     let postId: Int
     /// Blocking the post's author hides the whole post, so the sheet closes.
     let postAuthorId: Int
+    /// The user wrote the post: they may delete anyone's comment under it.
+    var isOwnPost = false
     /// Called after a comment or reply was posted (the feed bumps its comment count).
     var onCommentAdded: () -> Void = {}
+    /// Called after a deletion with how many comments went (a top-level one takes its replies).
+    var onCommentsDeleted: (Int) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
 
@@ -28,6 +32,8 @@ struct CommentsScreen: View {
     @State private var selfUsername: String? = nil
     @State private var reportTarget: ReportTarget? = nil
     @State private var blockTarget: BlockTarget? = nil
+    /// Whose profile is open on top of the comments.
+    @State private var profileUsername: String? = nil
 
     var body: some View {
         NavigationStack {
@@ -41,6 +47,9 @@ struct CommentsScreen: View {
             }
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(item: $profileUsername) { username in
+                UserProfileScreen(username: username)
+            }
             .sheet(item: $reportTarget) { target in
                 // Presented over the dark feed, like this sheet.
                 ReportSheet(target: target)
@@ -95,6 +104,7 @@ struct CommentsScreen: View {
                                 comment: $comment,
                                 isReply: false,
                                 selfUsername: selfUsername,
+                                canDeleteAnyComment: isOwnPost,
                                 onReply: { target in
                                     replyTarget = target
                                     isInputFocused = true
@@ -106,6 +116,12 @@ struct CommentsScreen: View {
                                 onBlock: { target in
                                     blockTarget = BlockTarget(userId: Int64(target.authorId),
                                                               username: target.authorUsername)
+                                },
+                                onDelete: { target in
+                                    Task { await deleteComment(target) }
+                                },
+                                onOpenProfile: { username in
+                                    profileUsername = username
                                 }
                             )
                         }
@@ -208,7 +224,7 @@ struct CommentsScreen: View {
                 $0.likesCount = original.likesCount
             }
             guard !error.isCancellation else { return }
-            actionError = "Couldn't update like: \(error.userMessage)"
+            actionError = String(localized: "Couldn't update like: \(error.userMessage)", bundle: .app)
         }
     }
 
@@ -252,7 +268,39 @@ struct CommentsScreen: View {
         if case APIError.server(let code, let message) = error, (400..<500).contains(code) {
             return message
         }
-        return "Couldn't post comment: \(error.userMessage)"
+        return String(localized: "Couldn't post comment: \(error.userMessage)", bundle: .app)
+    }
+
+    private func deleteComment(_ target: CommentResponse) async {
+        actionError = nil
+        do {
+            try await PostService.shared.deleteComment(postId: postId, commentId: target.id)
+        } catch {
+            guard !error.isCancellation else { return }
+            actionError = String(localized: "Couldn't delete comment: \(error.userMessage)", bundle: .app)
+            return
+        }
+
+        // A top-level comment goes with its replies; a reply goes alone.
+        var removed = 0
+        if let index = comments.firstIndex(where: { $0.id == target.id }) {
+            removed = 1 + (comments[index].replies?.count ?? 0)
+            comments.remove(at: index)
+        } else {
+            for i in comments.indices {
+                if let j = comments[i].replies?.firstIndex(where: { $0.id == target.id }) {
+                    comments[i].replies?.remove(at: j)
+                    removed = 1
+                    break
+                }
+            }
+        }
+        if let reply = replyTarget, reply.id == target.id || reply.parentId == target.id {
+            replyTarget = nil
+        }
+        if removed > 0 {
+            onCommentsDeleted(removed)
+        }
     }
 
     private func removeComments(byAuthorId userId: Int64) {

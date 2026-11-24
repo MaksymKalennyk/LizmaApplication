@@ -1,0 +1,3560 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    " " : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        }
+      }
+    },
+    "@%@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "@%@"
+          }
+        }
+      }
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %@ · %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ · %3$@"
+          }
+        }
+      }
+    },
+    "%@ by %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ by %2$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        }
+      }
+    },
+    "%@ deleted the account %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: видалено акаунт %2$@"
+          }
+        }
+      }
+    },
+    "%@ dismissed a report about %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: відхилено скаргу на %2$@"
+          }
+        }
+      }
+    },
+    "%@ lifted the suspension of %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: знято призупинення з %2$@"
+          }
+        }
+      }
+    },
+    "%@ removed content by %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: видалено вміст %2$@"
+          }
+        }
+      }
+    },
+    "%@ suspended %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: призупинено %2$@"
+          }
+        }
+      }
+    },
+    "%@ We'll try again the next time you open Lizma." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Ми спробуємо ще раз, коли ви наступного разу відкриєте Lizma."
+          }
+        }
+      }
+    },
+    "%@'s profile" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профіль %@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
+          }
+        }
+      }
+    },
+    "%lld friends" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld friend"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld friends"
+                }
+              }
+            }
+          }
+        },
+        "uk" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld друзі"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld друзів"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld друг"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld друга"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld likes" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld like"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld likes"
+                }
+              }
+            }
+          }
+        },
+        "uk" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld вподобання"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld вподобань"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld вподобання"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld вподобання"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld reactions" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reaction"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reactions"
+                }
+              }
+            }
+          }
+        },
+        "uk" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld реакції"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld реакцій"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld реакція"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld реакції"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld reports" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld report"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reports"
+                }
+              }
+            }
+          }
+        },
+        "uk" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld скарги"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld скарг"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld скарга"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld скарги"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld waiting" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld waiting"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld waiting"
+                }
+              }
+            }
+          }
+        },
+        "uk" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld очікують"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld очікують"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld очікує"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld очікує"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "30-second preview" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30-секундний уривок"
+          }
+        }
+      }
+    },
+    "99+" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "99+"
+          }
+        }
+      }
+    },
+    "a deleted user" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "видалений користувач"
+          }
+        }
+      }
+    },
+    "a former moderator" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "колишній модератор"
+          }
+        }
+      }
+    },
+    "A former moderator" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Колишній модератор"
+          }
+        }
+      }
+    },
+    "About" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Про застосунок"
+          }
+        }
+      }
+    },
+    "Accept" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прийняти"
+          }
+        }
+      }
+    },
+    "Accept %@'s friend request" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прийняти запит на дружбу від %@"
+          }
+        }
+      }
+    },
+    "Activity" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Журнал дій"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати"
+          }
+        }
+      }
+    },
+    "Add %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати %@"
+          }
+        }
+      }
+    },
+    "Add a caption (optional)" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додайте підпис (необов’язково)"
+          }
+        }
+      }
+    },
+    "Add details (optional)" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додайте подробиці (необов’язково)"
+          }
+        }
+      }
+    },
+    "Add friend" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати в друзі"
+          }
+        }
+      }
+    },
+    "Add friends or share a track" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додайте друзів або поділіться треком"
+          }
+        }
+      }
+    },
+    "Add photo" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати фото"
+          }
+        }
+      }
+    },
+    "All" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Усі"
+          }
+        }
+      }
+    },
+    "All caught up." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Усе опрацьовано."
+          }
+        }
+      }
+    },
+    "Allow notifications" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дозволити сповіщення"
+          }
+        }
+      }
+    },
+    "Already have an account? Sign in" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже маєте акаунт? Увійдіть"
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Застосунок"
+          }
+        }
+      }
+    },
+    "Author suspended" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автора призупинено"
+          }
+        }
+      }
+    },
+    "Be the first to comment." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прокоментуйте першими."
+          }
+        }
+      }
+    },
+    "Block" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблокувати"
+          }
+        }
+      }
+    },
+    "Block %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблокувати %@"
+          }
+        }
+      }
+    },
+    "Block %@?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблокувати %@?"
+          }
+        }
+      }
+    },
+    "Block user" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблокувати користувача"
+          }
+        }
+      }
+    },
+    "Blocked users" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблоковані користувачі"
+          }
+        }
+      }
+    },
+    "by %@ · %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "від %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        }
+      }
+    },
+    "Cancel reply" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати відповідь"
+          }
+        }
+      }
+    },
+    "Cancel request" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати запит"
+          }
+        }
+      }
+    },
+    "Cancel the friend request to %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати запит на дружбу для %@"
+          }
+        }
+      }
+    },
+    "Change photo" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити фото"
+          }
+        }
+      }
+    },
+    "Change your reaction %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити реакцію %@"
+          }
+        }
+      }
+    },
+    "Checked" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позначено"
+          }
+        }
+      }
+    },
+    "Choose another track" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрати інший трек"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрити"
+          }
+        }
+      }
+    },
+    "Comment by %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Коментар %@"
+          }
+        }
+      }
+    },
+    "Comments" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Коментарі"
+          }
+        }
+      }
+    },
+    "Comments and replies" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Коментарі та відповіді"
+          }
+        }
+      }
+    },
+    "composer.publish" : {
+      "comment" : "The button that publishes the post",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Опублікувати"
+          }
+        }
+      }
+    },
+    "Confirm with your password" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підтвердьте паролем"
+          }
+        }
+      }
+    },
+    "Contact support" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Написати в підтримку"
+          }
+        }
+      }
+    },
+    "Content removed" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вміст видалено"
+          }
+        }
+      }
+    },
+    "Couldn't accept invite" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося прийняти запрошення"
+          }
+        }
+      }
+    },
+    "Couldn't block user" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося заблокувати користувача"
+          }
+        }
+      }
+    },
+    "Couldn't create an invite link. Please try again." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося створити посилання-запрошення. Спробуйте ще раз."
+          }
+        }
+      }
+    },
+    "Couldn't delete comment: %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося видалити коментар: %@"
+          }
+        }
+      }
+    },
+    "Couldn't delete post" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося видалити допис"
+          }
+        }
+      }
+    },
+    "Couldn't load activity" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити журнал"
+          }
+        }
+      }
+    },
+    "Couldn't load comments" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити коментарі"
+          }
+        }
+      }
+    },
+    "Couldn't load feedback" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити відгуки"
+          }
+        }
+      }
+    },
+    "Couldn't load friends" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити друзів"
+          }
+        }
+      }
+    },
+    "Couldn't load reactions" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити реакції"
+          }
+        }
+      }
+    },
+    "Couldn't load reports" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити скарги"
+          }
+        }
+      }
+    },
+    "Couldn't load the player" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити програвач"
+          }
+        }
+      }
+    },
+    "Couldn't load the profile" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити профіль"
+          }
+        }
+      }
+    },
+    "Couldn't load your feed" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити стрічку"
+          }
+        }
+      }
+    },
+    "Couldn't post comment: %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося надіслати коментар: %@"
+          }
+        }
+      }
+    },
+    "Couldn't post: %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося опублікувати: %@"
+          }
+        }
+      }
+    },
+    "Couldn't remove %@: %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося видалити %1$@ з друзів: %2$@"
+          }
+        }
+      }
+    },
+    "Couldn't renew your session. Check your connection and try again." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося оновити сеанс. Перевірте з’єднання і спробуйте ще раз."
+          }
+        }
+      }
+    },
+    "Couldn't save" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося зберегти"
+          }
+        }
+      }
+    },
+    "Couldn't update like: %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося оновити вподобання: %@"
+          }
+        }
+      }
+    },
+    "Couldn't update reaction" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося оновити реакцію"
+          }
+        }
+      }
+    },
+    "Create account" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Створити акаунт"
+          }
+        }
+      }
+    },
+    "Daily reminder" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щоденне нагадування"
+          }
+        }
+      }
+    },
+    "Decision" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рішення"
+          }
+        }
+      }
+    },
+    "Decisions on reports and users show up here." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тут з’являтимуться рішення щодо скарг і користувачів."
+          }
+        }
+      }
+    },
+    "Decisions show up here." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тут з’являтимуться рішення."
+          }
+        }
+      }
+    },
+    "Decline" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відхилити"
+          }
+        }
+      }
+    },
+    "Decline %@'s friend request" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відхилити запит на дружбу від %@"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити"
+          }
+        }
+      }
+    },
+    "Delete %@?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити %@?"
+          }
+        }
+      }
+    },
+    "Delete account" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити акаунт"
+          }
+        }
+      }
+    },
+    "Delete account…" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити акаунт…"
+          }
+        }
+      }
+    },
+    "Delete comment" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити коментар"
+          }
+        }
+      }
+    },
+    "Delete post" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити допис"
+          }
+        }
+      }
+    },
+    "Delete this comment?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити цей коментар?"
+          }
+        }
+      }
+    },
+    "Delete this post?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити цей допис?"
+          }
+        }
+      }
+    },
+    "Delete your account permanently?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити акаунт назавжди?"
+          }
+        }
+      }
+    },
+    "Deleting your account permanently removes:" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалення акаунта назавжди прибирає:"
+          }
+        }
+      }
+    },
+    "Dismiss" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відхилити"
+          }
+        }
+      }
+    },
+    "Dismiss the report?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відхилити скаргу?"
+          }
+        }
+      }
+    },
+    "Dismissed" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відхилено"
+          }
+        }
+      }
+    },
+    "Edit profile" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Редагувати профіль"
+          }
+        }
+      }
+    },
+    "Email (optional)" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ел. пошта (необов’язково)"
+          }
+        }
+      }
+    },
+    "Error (%lld)" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Помилка (%lld)"
+          }
+        }
+      }
+    },
+    "Every day at %@, if you haven't shared a song yet that day." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щодня о %@, якщо ви ще не поділилися піснею того дня."
+          }
+        }
+      }
+    },
+    "Feed" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стрічка"
+          }
+        }
+      }
+    },
+    "Feedback" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відгуки"
+          }
+        }
+      }
+    },
+    "feedback.form.title" : {
+      "comment" : "Title of the feedback form, between Cancel and Send",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send feedback"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відгук"
+          }
+        }
+      }
+    },
+    "feedback.handledBy" : {
+      "comment" : "Who marked the feedback as done, and when",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Опрацьовано"
+          }
+        }
+      }
+    },
+    "feedback.tab.done" : {
+      "comment" : "Tab with feedback marked as done",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Опрацьовані"
+          }
+        }
+      }
+    },
+    "Find a track" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знайдіть трек"
+          }
+        }
+      }
+    },
+    "Frequently Used" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Часто вживані"
+          }
+        }
+      }
+    },
+    "Friend invite" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запрошення в друзі"
+          }
+        }
+      }
+    },
+    "Friend requests" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запити на дружбу"
+          }
+        }
+      }
+    },
+    "Friends" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Друзі"
+          }
+        }
+      }
+    },
+    "From" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Від"
+          }
+        }
+      }
+    },
+    "Handle reports within 24 hours. New reports and feedback are also emailed to the support mailbox." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розглядайте скарги протягом 24 годин. Нові скарги та відгуки також надходять на пошту підтримки."
+          }
+        }
+      }
+    },
+    "Handled" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розглянуті"
+          }
+        }
+      }
+    },
+    "Harassment" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цькування"
+          }
+        }
+      }
+    },
+    "Harassment or bullying" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переслідування або цькування"
+          }
+        }
+      }
+    },
+    "Hate" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ненависть"
+          }
+        }
+      }
+    },
+    "Hate speech or symbols" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мова ворожнечі або символи ненависті"
+          }
+        }
+      }
+    },
+    "I agree to the [Terms of Use](lizma-legal://terms) and the [Privacy Policy](lizma-legal://privacy)." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Я погоджуюся з [Умовами використання](lizma-legal://terms) та [Політикою конфіденційності](lizma-legal://privacy)."
+          }
+        }
+      }
+    },
+    "I agree to the Terms of Use and Privacy Policy" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Я погоджуюся з Умовами використання та Політикою конфіденційності"
+          }
+        }
+      }
+    },
+    "Idea" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ідея"
+          }
+        }
+      }
+    },
+    "Incorrect username or password" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Неправильне ім’я користувача або пароль"
+          }
+        }
+      }
+    },
+    "It's deleted for everyone, with its comments and reactions." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Його буде видалено для всіх разом із коментарями та реакціями."
+          }
+        }
+      }
+    },
+    "Its comments and reactions are deleted too. This can't be undone." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Коментарі та реакції теж буде видалено. Цю дію не можна скасувати."
+          }
+        }
+      }
+    },
+    "Its replies are deleted too. This can't be undone." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відповіді теж буде видалено. Цю дію не можна скасувати."
+          }
+        }
+      }
+    },
+    "just now" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "щойно"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мова"
+          }
+        }
+      }
+    },
+    "Leave your email if you'd like an answer. We use it only to reply to you." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Залиште адресу, якщо хочете отримати відповідь. Ми використаємо її лише для відповіді вам."
+          }
+        }
+      }
+    },
+    "Left an email" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Є адреса для відповіді"
+          }
+        }
+      }
+    },
+    "Lift the suspension" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зняти призупинення"
+          }
+        }
+      }
+    },
+    "Like" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подобається"
+          }
+        }
+      }
+    },
+    "Liza's idea, Max's implementation" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ідея Лізи, реалізація Макса"
+          }
+        }
+      }
+    },
+    "Lizma" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lizma"
+          }
+        }
+      }
+    },
+    "Lizma %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lizma %@"
+          }
+        }
+      }
+    },
+    "Mark as done" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позначити як опрацьоване"
+          }
+        }
+      }
+    },
+    "Message sent" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повідомлення надіслано"
+          }
+        }
+      }
+    },
+    "Messages you mark as done show up here." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тут з’являтимуться повідомлення, позначені як опрацьовані."
+          }
+        }
+      }
+    },
+    "Moderation" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модерація"
+          }
+        }
+      }
+    },
+    "Moderator" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модератор"
+          }
+        }
+      }
+    },
+    "More options" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інші дії"
+          }
+        }
+      }
+    },
+    "Move back to new" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повернути до нових"
+          }
+        }
+      }
+    },
+    "Music search is unavailable right now. Try again in a minute." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук музики зараз недоступний. Спробуйте за хвилину."
+          }
+        }
+      }
+    },
+    "My posts" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мої дописи"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ім'я"
+          }
+        }
+      }
+    },
+    "New" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нові"
+          }
+        }
+      }
+    },
+    "New friend requests and new friends, the first reaction of each friend to your post, comments on your posts and replies to you." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нові запити на дружбу та нові друзі, перша реакція кожного друга на ваш допис, коментарі до ваших дописів і відповіді вам."
+          }
+        }
+      }
+    },
+    "New post" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Допис"
+          }
+        }
+      }
+    },
+    "No account? Sign up" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає акаунта? Зареєструйтеся"
+          }
+        }
+      }
+    },
+    "No blocked users" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає заблокованих"
+          }
+        }
+      }
+    },
+    "No comments yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ще немає коментарів"
+          }
+        }
+      }
+    },
+    "No friends yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ще немає друзів"
+          }
+        }
+      }
+    },
+    "No new feedback" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нових відгуків немає"
+          }
+        }
+      }
+    },
+    "No open reports" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкритих скарг немає"
+          }
+        }
+      }
+    },
+    "No posts from friends yet." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Друзі ще нічого не опублікували."
+          }
+        }
+      }
+    },
+    "No posts yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дописів ще немає"
+          }
+        }
+      }
+    },
+    "No reactions yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ще немає реакцій"
+          }
+        }
+      }
+    },
+    "No suspended users" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає призупинених користувачів"
+          }
+        }
+      }
+    },
+    "Not checked" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не позначено"
+          }
+        }
+      }
+    },
+    "Not found" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не знайдено"
+          }
+        }
+      }
+    },
+    "Nothing done yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Опрацьованих ще немає"
+          }
+        }
+      }
+    },
+    "Nothing handled yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розглянутих ще немає"
+          }
+        }
+      }
+    },
+    "Nothing is removed." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нічого не буде видалено."
+          }
+        }
+      }
+    },
+    "Nothing yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поки що нічого"
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сповіщення"
+          }
+        }
+      }
+    },
+    "Notifications are off for Lizma" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сповіщення для Lizma вимкнено"
+          }
+        }
+      }
+    },
+    "Nudity" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оголеність"
+          }
+        }
+      }
+    },
+    "Nudity or sexual content" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оголеність або сексуальний вміст"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "Only friends see %@'s posts" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дописи %@ бачать лише друзі"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкриті"
+          }
+        }
+      }
+    },
+    "Open in Apple Music" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити в Apple Music"
+          }
+        }
+      }
+    },
+    "Open in Spotify" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити в Spotify"
+          }
+        }
+      }
+    },
+    "Open Settings" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити Параметри"
+          }
+        }
+      }
+    },
+    "Opens Mail. The notification email has this address as Reply-To as well." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкриє Пошту. У листі-сповіщенні ця адреса теж указана для відповіді."
+          }
+        }
+      }
+    },
+    "Opens the profile" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкриває профіль"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "comment" : "A feedback topic\nA report reason",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інше"
+          }
+        }
+      }
+    },
+    "Password" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароль"
+          }
+        }
+      }
+    },
+    "Password cannot be blank" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароль не може бути порожнім"
+          }
+        }
+      }
+    },
+    "Password length must be between %lld and %lld characters" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароль має містити від %1$lld до %2$lld символів"
+          }
+        }
+      }
+    },
+    "Pause preview" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинити уривок"
+          }
+        }
+      }
+    },
+    "Pending" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Очікує"
+          }
+        }
+      }
+    },
+    "People you block can't add you as a friend, and you won't see their posts, comments or reactions." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблоковані вами люди не зможуть додати вас у друзі, а ви не бачитимете їхніх дописів, коментарів і реакцій."
+          }
+        }
+      }
+    },
+    "Phone's language" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мова телефону"
+          }
+        }
+      }
+    },
+    "Play" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слухати"
+          }
+        }
+      }
+    },
+    "Play %@ by %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слухати «%1$@», %2$@"
+          }
+        }
+      }
+    },
+    "Play preview" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відтворити уривок"
+          }
+        }
+      }
+    },
+    "Play track" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слухати трек"
+          }
+        }
+      }
+    },
+    "Please check what you entered." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перевірте введені дані."
+          }
+        }
+      }
+    },
+    "Popular" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Популярні"
+          }
+        }
+      }
+    },
+    "Post" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Допис"
+          }
+        }
+      }
+    },
+    "Post by %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Допис %@"
+          }
+        }
+      }
+    },
+    "Posts" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дописи"
+          }
+        }
+      }
+    },
+    "Privacy & safety" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конфіденційність і безпека"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Політика конфіденційності"
+          }
+        }
+      }
+    },
+    "Problem" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проблема"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профіль"
+          }
+        }
+      }
+    },
+    "Profile and my posts" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профіль і мої дописи"
+          }
+        }
+      }
+    },
+    "PUSH_COMMENT" : {
+      "comment" : "Push notification text (APNs loc-key, sent by the server)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ commented: %2$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ коментує: %2$@"
+          }
+        }
+      }
+    },
+    "PUSH_DAILY_REMINDER" : {
+      "comment" : "Push notification text (APNs loc-key, sent by the server)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What are you listening to today? Share a song with your friends 🎧"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Що ви слухаєте сьогодні? Поділіться піснею з друзями 🎧"
+          }
+        }
+      }
+    },
+    "PUSH_FRIEND_REQUEST" : {
+      "comment" : "Push notification text (APNs loc-key, sent by the server)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wants to be friends"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ хоче додати вас у друзі"
+          }
+        }
+      }
+    },
+    "PUSH_NEW_FRIEND" : {
+      "comment" : "Push notification text (APNs loc-key, sent by the server)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is now your friend"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ тепер у ваших друзях"
+          }
+        }
+      }
+    },
+    "PUSH_REACTION" : {
+      "comment" : "Push notification text (APNs loc-key, sent by the server)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ reacted %2$@ to “%3$@”"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ на ваш допис «%3$@»"
+          }
+        }
+      }
+    },
+    "PUSH_REPLY" : {
+      "comment" : "Push notification text (APNs loc-key, sent by the server)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ replied: %2$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ відповідає: %2$@"
+          }
+        }
+      }
+    },
+    "Re: your Lizma feedback" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Re: ваш відгук про Lizma"
+          }
+        }
+      }
+    },
+    "React" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відреагувати"
+          }
+        }
+      }
+    },
+    "Reactions" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Реакції"
+          }
+        }
+      }
+    },
+    "Reactions from your friends will show up here." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тут з’являтимуться реакції ваших друзів."
+          }
+        }
+      }
+    },
+    "Refresh" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оновити"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити"
+          }
+        }
+      }
+    },
+    "Remove %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити %@"
+          }
+        }
+      }
+    },
+    "Remove comment" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити коментар"
+          }
+        }
+      }
+    },
+    "Remove friend" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити з друзів"
+          }
+        }
+      }
+    },
+    "Remove from friends?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити з друзів?"
+          }
+        }
+      }
+    },
+    "Remove post" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити допис"
+          }
+        }
+      }
+    },
+    "Remove this comment?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити цей коментар?"
+          }
+        }
+      }
+    },
+    "Remove this post?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити цей допис?"
+          }
+        }
+      }
+    },
+    "Reply" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відповісти"
+          }
+        }
+      }
+    },
+    "Reply to %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відповісти на %@"
+          }
+        }
+      }
+    },
+    "Replying to %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відповідь для %@"
+          }
+        }
+      }
+    },
+    "Report" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поскаржитися"
+          }
+        }
+      }
+    },
+    "Report comment" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поскаржитися на коментар"
+          }
+        }
+      }
+    },
+    "Report post" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поскаржитися на допис"
+          }
+        }
+      }
+    },
+    "Report sent" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скаргу надіслано"
+          }
+        }
+      }
+    },
+    "Report user" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поскаржитися на користувача"
+          }
+        }
+      }
+    },
+    "report.title.comment" : {
+      "comment" : "Title of the report form, between Cancel and Submit",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report comment"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скарга"
+          }
+        }
+      }
+    },
+    "report.title.post" : {
+      "comment" : "Title of the report form, between Cancel and Submit",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report post"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скарга"
+          }
+        }
+      }
+    },
+    "report.title.user" : {
+      "comment" : "Title of the report form, between Cancel and Submit",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report user"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скарга"
+          }
+        }
+      }
+    },
+    "Reports" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скарги"
+          }
+        }
+      }
+    },
+    "Requested" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслано"
+          }
+        }
+      }
+    },
+    "Results" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Результати"
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторити"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберегти"
+          }
+        }
+      }
+    },
+    "Search by username" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук за ім’ям користувача"
+          }
+        }
+      }
+    },
+    "Search by username or share an invite link." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шукайте за ім’ям користувача або поділіться посиланням-запрошенням."
+          }
+        }
+      }
+    },
+    "Search by username to find anyone." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шукайте за ім’ям користувача, щоб знайти будь-кого."
+          }
+        }
+      }
+    },
+    "Search emoji" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук емодзі"
+          }
+        }
+      }
+    },
+    "Search failed: %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося знайти: %@"
+          }
+        }
+      }
+    },
+    "Search for a song to share with your friends." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знайдіть пісню, щоб поділитися нею з друзями."
+          }
+        }
+      }
+    },
+    "Search songs and artists" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук пісень і виконавців"
+          }
+        }
+      }
+    },
+    "See who reacted" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хто відреагував"
+          }
+        }
+      }
+    },
+    "Send" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслати"
+          }
+        }
+      }
+    },
+    "Send comment" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслати коментар"
+          }
+        }
+      }
+    },
+    "Send feedback" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслати відгук"
+          }
+        }
+      }
+    },
+    "Sent" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслано"
+          }
+        }
+      }
+    },
+    "Sent requests" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслані запити"
+          }
+        }
+      }
+    },
+    "Server error. Please try again later." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Помилка сервера. Спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "Session expired, please sign in again" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеанс завершився, увійдіть знову"
+          }
+        }
+      }
+    },
+    "Share invite link" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поділитися запрошенням"
+          }
+        }
+      }
+    },
+    "Show" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показати"
+          }
+        }
+      }
+    },
+    "Shown instead of @%@, which stays your username. Leave it empty to show the username." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показується замість @%@ — це лишається вашим іменем користувача. Залиште поле порожнім, щоб показувати ім'я користувача."
+          }
+        }
+      }
+    },
+    "Sign in" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увійти"
+          }
+        }
+      }
+    },
+    "Sign out" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вийти"
+          }
+        }
+      }
+    },
+    "Sign out of Lizma?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вийти з Lizma?"
+          }
+        }
+      }
+    },
+    "Sign up" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Реєстрація"
+          }
+        }
+      }
+    },
+    "Something else" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щось інше"
+          }
+        }
+      }
+    },
+    "Something went wrong" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щось пішло не так"
+          }
+        }
+      }
+    },
+    "Something went wrong. Please try again." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щось пішло не так. Спробуйте ще раз."
+          }
+        }
+      }
+    },
+    "Spam" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спам"
+          }
+        }
+      }
+    },
+    "Spam or scam" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спам або шахрайство"
+          }
+        }
+      }
+    },
+    "Submit" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслати"
+          }
+        }
+      }
+    },
+    "Suspend" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинити"
+          }
+        }
+      }
+    },
+    "Suspend %@?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинити %@?"
+          }
+        }
+      }
+    },
+    "Suspended" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинено"
+          }
+        }
+      }
+    },
+    "Suspended: can't sign in. Lifting it doesn't bring back what was removed." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинено: не може увійти. Зняття призупинення не повертає видалене."
+          }
+        }
+      }
+    },
+    "Suspending removes everything they posted and their friendships." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинення видаляє все, що людина опублікувала, і її друзів."
+          }
+        }
+      }
+    },
+    "System" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Система"
+          }
+        }
+      }
+    },
+    "Terms of Use" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Умови використання"
+          }
+        }
+      }
+    },
+    "The account and all of its data are deleted for good, and the username becomes free. Use it for deletion requests sent to support." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Акаунт і всі його дані буде видалено назавжди, а ім’я користувача звільниться. Використовуйте для запитів на видалення, що надійшли в підтримку."
+          }
+        }
+      }
+    },
+    "The decision closes every open report about this comment." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рішення закриває всі відкриті скарги на цей коментар."
+          }
+        }
+      }
+    },
+    "The decision closes every open report about this post." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рішення закриває всі відкриті скарги на цей допис."
+          }
+        }
+      }
+    },
+    "The decision closes every open report about this user." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рішення закриває всі відкриті скарги на цього користувача."
+          }
+        }
+      }
+    },
+    "The phone's own screens, such as the photo picker, follow the next time you open Lizma." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Системні екрани телефону, як-от вибір фото, перейдуть на цю мову, коли ви наступного разу відкриєте Lizma."
+          }
+        }
+      }
+    },
+    "The server sent an unexpected answer. Please try again." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сервер надіслав несподівану відповідь. Спробуйте ще раз."
+          }
+        }
+      }
+    },
+    "They can't sign in anymore, and everything they posted and their friendships are removed. It can be lifted later in Users, but the content doesn't come back." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Людина більше не зможе увійти, а все, що вона опублікувала, і її друзів буде видалено. Призупинення можна зняти пізніше в розділі «Користувачі», але вміст не повернеться."
+          }
+        }
+      }
+    },
+    "this account" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "цей акаунт"
+          }
+        }
+      }
+    },
+    "This can't be undone" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цю дію не можна скасувати"
+          }
+        }
+      }
+    },
+    "This can't be undone." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цю дію не можна скасувати."
+          }
+        }
+      }
+    },
+    "This conflicts with something that already exists." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Це суперечить тому, що вже існує."
+          }
+        }
+      }
+    },
+    "This content was already deleted." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цей вміст уже видалено."
+          }
+        }
+      }
+    },
+    "This photo can't be used. Try another one." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Це фото не підходить. Спробуйте інше."
+          }
+        }
+      }
+    },
+    "this user" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "цього користувача"
+          }
+        }
+      }
+    },
+    "Topic" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тема"
+          }
+        }
+      }
+    },
+    "Try again" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спробувати ще раз"
+          }
+        }
+      }
+    },
+    "Turn them on in Settings to hear about friends, reactions and comments." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увімкніть їх у Параметрах, щоб дізнаватися про друзів, реакції та коментарі."
+          }
+        }
+      }
+    },
+    "Unblock" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розблокувати"
+          }
+        }
+      }
+    },
+    "Unblock %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розблокувати %@"
+          }
+        }
+      }
+    },
+    "Unlike" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Більше не подобається"
+          }
+        }
+      }
+    },
+    "User %@" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Користувач %@"
+          }
+        }
+      }
+    },
+    "User report" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скарга на користувача"
+          }
+        }
+      }
+    },
+    "Username" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ім’я користувача"
+          }
+        }
+      }
+    },
+    "Username can contain only letters, digits, '.', '_' and '-'" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ім’я користувача може містити лише літери, цифри, «.», «_» і «-»"
+          }
+        }
+      }
+    },
+    "Username cannot be blank" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ім’я користувача не може бути порожнім"
+          }
+        }
+      }
+    },
+    "Username must be between 5 and 50 characters" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ім’я користувача має містити від 5 до 50 символів"
+          }
+        }
+      }
+    },
+    "Users" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Користувачі"
+          }
+        }
+      }
+    },
+    "Violence" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Насильство"
+          }
+        }
+      }
+    },
+    "Violence or threats" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Насильство або погрози"
+          }
+        }
+      }
+    },
+    "What went wrong? What did you expect to happen?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Що пішло не так? Чого ви очікували?"
+          }
+        }
+      }
+    },
+    "What would make Lizma better?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Що зробило б Lizma кращою?"
+          }
+        }
+      }
+    },
+    "Why are you reporting this comment?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чому ви скаржитеся на цей коментар?"
+          }
+        }
+      }
+    },
+    "Why are you reporting this post?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чому ви скаржитеся на цей допис?"
+          }
+        }
+      }
+    },
+    "Why are you reporting this user?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чому ви скаржитеся на цього користувача?"
+          }
+        }
+      }
+    },
+    "Works once and expires in 7 days" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спрацьовує один раз і діє 7 днів"
+          }
+        }
+      }
+    },
+    "You and %@ are now friends!" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тепер ви з %@ друзі!"
+          }
+        }
+      }
+    },
+    "You and %@ will stop seeing each other's posts. They won't be notified." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви з %@ більше не бачитимете дописів одне одного. Людина не отримає сповіщення."
+          }
+        }
+      }
+    },
+    "You haven't shared anything yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви ще нічим не поділилися"
+          }
+        }
+      }
+    },
+    "You won't see each other's posts, and you'll be removed from each other's friends." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви не бачитимете дописів одне одного, і вас буде видалено з друзів одне в одного."
+          }
+        }
+      }
+    },
+    "Your account was deleted" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш акаунт видалено"
+          }
+        }
+      }
+    },
+    "Your comments and reactions" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваші коментарі та реакції"
+          }
+        }
+      }
+    },
+    "Your connected music accounts" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підключені музичні акаунти"
+          }
+        }
+      }
+    },
+    "Your friends and friend requests" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваші друзі та запити на дружбу"
+          }
+        }
+      }
+    },
+    "Your message" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваше повідомлення"
+          }
+        }
+      }
+    },
+    "Your phone asks first; you can change your mind in Settings at any time." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Телефон спершу запитає дозволу; передумати можна будь-коли в Параметрах."
+          }
+        }
+      }
+    },
+    "Your posts" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваші дописи"
+          }
+        }
+      }
+    },
+    "Your posts, comments, reactions, friends and music connections will be deleted. This can't be undone." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваші дописи, коментарі, реакції, друзів і підключення музичних сервісів буде видалено. Цю дію не можна скасувати."
+          }
+        }
+      }
+    },
+    "Your profile" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш профіль"
+          }
+        }
+      }
+    },
+    "Your username, Lizma %@ and %@ are sent with your message." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разом із повідомленням надсилаються ваше ім’я користувача, Lizma %1$@ і %2$@."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

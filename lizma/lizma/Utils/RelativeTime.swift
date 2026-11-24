@@ -24,8 +24,9 @@ enum RelativeTime {
         guard let date = date(from: dateString) else { return dateString }
         // The formatter turns a few seconds (or a tiny clock skew) into "in 0 sec".
         if abs(date.timeIntervalSince(now)) < 60 {
-            return "just now"
+            return String(localized: "just now", bundle: .app)
         }
+        relative.locale = LanguageSettings.locale(for: LanguageSettings.shared.code) // Profile → Language
         return relative.localizedString(for: date, relativeTo: now)
     }
 }

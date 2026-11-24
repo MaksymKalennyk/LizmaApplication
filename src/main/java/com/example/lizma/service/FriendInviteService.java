@@ -10,6 +10,7 @@ import com.example.lizma.model.dto.InviteLinkDto;
 import com.example.lizma.repo.FriendInviteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ public class FriendInviteService {
     private final FriendInviteRepository inviteRepository;
     private final FriendshipService friendshipService;
     private final UserService userService;
+    private final ApplicationEventPublisher events;
 
     @Value("${app.externalBaseUrl}")
     private String externalBaseUrl;
@@ -86,6 +88,7 @@ public class FriendInviteService {
         invite.setStatus(FriendInvite.Status.ACCEPTED);
         invite.setAcceptedAt(Instant.now());
         invite.setAcceptedBy(user);
+        events.publishEvent(new ActivityEvent.BecameFriends(user.getId(), inviter.getId()));
         return AcceptResult.BECAME_FRIENDS;
     }
 

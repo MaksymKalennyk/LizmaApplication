@@ -35,18 +35,28 @@ public class ContentCleanupService {
         deleteComments(List.of(commentId));
     }
 
-    /** Removes the user and every piece of data that belongs to or points at them (guideline 5.1.1(v)). */
+    /**
+     * Removes the user and every piece of data that belongs to or points at them (guideline 5.1.1(v)).
+     * What they did as a moderator stays in the moderation log and on handled reports, without their name.
+     */
     @Transactional
     public void deleteUser(Long userId) {
         removeUserContent(userId);
         update("delete from UserBlock b where b.blocked.id = :id", userId);
         update("delete from Report r where r.reporter.id = :id or r.targetUser.id = :id", userId);
+        update("update Report r set r.resolvedBy = null where r.resolvedBy.id = :id", userId);
+        update("delete from Feedback f where f.author.id = :id", userId);
+        update("update Feedback f set f.handledBy = null where f.handledBy.id = :id", userId);
+        update("update ModerationAction a set a.moderator = null where a.moderator.id = :id", userId);
+        update("delete from RefreshToken t where t.user.id = :id", userId);
         update("delete from Users u where u.id = :id", userId);
     }
 
     /**
-     * Removes everything the user put into the app (posts, comments, likes, reactions) and their connections
-     * (friends, requests, invite links, music accounts, the blocks they set). The account itself stays, and so
+     * Removes everything the user put into the app (posts, comments, likes, reactions, profile photo and name)
+     * and their connections
+     * (friends, requests, invite links, music accounts, the blocks they set, the phones that get their push
+     * notifications). The account itself stays, and so
      * do reports and other people's blocks against it: this is what a suspension leaves behind.
      */
     @Transactional
@@ -72,6 +82,9 @@ public class ContentCleanupService {
         update("delete from FriendInvite i where i.requester.id = :id", userId);
         update("delete from UserMusicAccount a where a.user.id = :id", userId);
         update("delete from UserBlock b where b.blocker.id = :id", userId);
+        update("delete from UserAvatar a where a.user.id = :id", userId);
+        update("delete from DeviceToken d where d.user.id = :id", userId);
+        update("update Users u set u.avatarToken = null, u.displayName = null where u.id = :id", userId);
     }
 
     private void update(String jpql, Long userId) {

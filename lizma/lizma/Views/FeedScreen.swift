@@ -31,13 +31,16 @@ struct FeedScreen: View {
     @State private var isPullArmed = false
     private static let refreshPullDistance: CGFloat = 90
 
-    @State private var playingTrackId: String? = nil
+    @State private var playingPost: PostResponse? = nil
 
     @State private var selectedPostForReaction: PostResponse? = nil
     @State private var selectedPostForReactionList: PostResponse? = nil
     @State private var selectedPostForComments: PostResponse? = nil
     @State private var reportTarget: ReportTarget? = nil
     @State private var blockTarget: BlockTarget? = nil
+    @State private var deleteError: String? = nil
+    /// The author whose profile is open over the feed.
+    @State private var profileUsername: String? = nil
     @State private var selfUsername: String? = nil
 
     var body: some View {
@@ -95,6 +98,13 @@ struct FeedScreen: View {
         .onReceive(NotificationCenter.default.publisher(for: .friendsChanged)) { _ in
             startReload()
         }
+        // Your name or photo changed (Edit profile): your posts here show the new ones right away.
+        .onReceive(CurrentUserStore.shared.$me.compactMap { $0 }) { me in
+            for index in posts.indices where posts[index].authorUsername == me.username {
+                posts[index].authorDisplayName = me.displayName
+                posts[index].authorAvatarUrl = me.avatarUrl
+            }
+        }
         .onChange(of: currentPostId) { _, postId in
             if let postId { loadMoreIfNeeded(reaching: postId) }
         }
@@ -110,18 +120,26 @@ struct FeedScreen: View {
             // Hide their posts right away; the reload triggered by `.friendsChanged` confirms it.
             removePosts(byAuthorId: blocked.userId)
         }
+        .sheet(item: Binding(get: { profileUsername.map { IdentifiableString(value: $0) } },
+                             set: { profileUsername = $0?.value })) { wrapper in
+            ProfileSheet(username: wrapper.value)
+                .preferredColorScheme(.dark)
+        }
+        .alert("Couldn't delete post", isPresented: Binding(get: { deleteError != nil },
+                                                            set: { if !$0 { deleteError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteError ?? "")
+        }
         // The feed is always dark, so everything that slides over it is dark as well.
         .sheet(item: $reportTarget) { target in
             ReportSheet(target: target)
                 .preferredColorScheme(.dark)
         }
 
-        .sheet(item: Binding(
-            get: { playingTrackId.map { IdentifiableString(value: $0) } },
-            set: { playingTrackId = $0?.value }
-        )) { identifiableStr in
-            SpotifyEmbedView(trackId: identifiableStr.value)
-                .presentationDetents([.height(SpotifyEmbedView.sheetHeight)])
+        .sheet(item: $playingPost) { post in
+            TrackPlayerSheet(post: post)
+                .presentationDetents([.height(post.previewUrl == nil && post.musicProvider != "SPOTIFY" ? 260 : 360)])
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
         }
@@ -155,7 +173,9 @@ struct FeedScreen: View {
             let postId = wrapper.value.id
             CommentsScreen(postId: postId,
                            postAuthorId: wrapper.value.authorId,
-                           onCommentAdded: { incrementCommentsCount(for: postId) })
+                           isOwnPost: wrapper.value.authorUsername == selfUsername,
+                           onCommentAdded: { incrementCommentsCount(for: postId) },
+                           onCommentsDeleted: { count in decrementCommentsCount(for: postId, by: count) })
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
@@ -189,8 +209,8 @@ struct FeedScreen: View {
                         post: $post,
                         contentInsets: contentInsets,
                         selfUsername: selfUsername,
-                        onPlay: { trackId in
-                            playingTrackId = trackId
+                        onPlay: {
+                            playingPost = post
                         },
                         onReact: {
                             if post.authorUsername == selfUsername {
@@ -207,6 +227,12 @@ struct FeedScreen: View {
                         },
                         onBlock: {
                             blockTarget = BlockTarget(userId: Int64(post.authorId), username: post.authorUsername)
+                        },
+                        onDelete: {
+                            Task { await deletePost(post) }
+                        },
+                        onOpenProfile: {
+                            profileUsername = post.authorUsername
                         }
                     )
                     .containerRelativeFrame([.horizontal, .vertical])
@@ -430,13 +456,28 @@ struct FeedScreen: View {
 
     // MARK: - Actions
 
-    /// Drops a blocked author's posts. If the reader was on one of them, the next post takes its place.
+    /// Drops a blocked author's posts.
     private func removePosts(byAuthorId userId: Int64) {
+        removePosts { Int64($0.authorId) == userId }
+    }
+
+    /// Drops posts from the feed. If the reader was on one of them, the next post takes its place.
+    private func removePosts(where shouldRemove: (PostResponse) -> Bool) {
         let currentIndex = posts.firstIndex { $0.id == currentPostId } ?? 0
-        let keptBefore = posts[..<currentIndex].filter { Int64($0.authorId) != userId }.count
-        posts.removeAll { Int64($0.authorId) == userId }
+        let keptBefore = posts[..<currentIndex].filter { !shouldRemove($0) }.count
+        posts.removeAll(where: shouldRemove)
         if !posts.contains(where: { $0.id == currentPostId }) {
             show(posts.isEmpty ? nil : posts[min(keptBefore, posts.count - 1)].id)
+        }
+    }
+
+    private func deletePost(_ post: PostResponse) async {
+        do {
+            try await PostService.shared.deletePost(postId: post.id)
+            removePosts { $0.id == post.id }
+        } catch {
+            guard !error.isCancellation else { return }
+            deleteError = error.userMessage
         }
     }
 
@@ -445,22 +486,15 @@ struct FeedScreen: View {
         posts[index].commentsCount += 1
     }
 
+    private func decrementCommentsCount(for postId: Int, by count: Int) {
+        guard let index = posts.firstIndex(where: { $0.id == postId }) else { return }
+        posts[index].commentsCount = max(0, posts[index].commentsCount - count)
+    }
+
     private func toggleReaction(postId: Int, emoji: String) async {
         guard let index = posts.firstIndex(where: { $0.id == postId }) else { return }
         let snapshot = posts[index]
-
-        var counts = snapshot.reactionsCount
-        if let previous = snapshot.currentUserReaction {
-            let remaining = (counts[previous] ?? 0) - 1
-            counts[previous] = remaining > 0 ? remaining : nil
-        }
-        // Same emoji again removes the reaction, a different one replaces it (as on the server).
-        let newReaction: String? = snapshot.currentUserReaction == emoji ? nil : emoji
-        if let newReaction {
-            counts[newReaction, default: 0] += 1
-        }
-        posts[index].currentUserReaction = newReaction
-        posts[index].reactionsCount = counts
+        posts[index] = snapshot.togglingReaction(emoji)
 
         do {
             try await PostService.shared.reactToPost(postId: postId, type: emoji)

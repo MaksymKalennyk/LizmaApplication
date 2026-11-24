@@ -10,11 +10,16 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.lizma.model.Users;
+
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Gives the moderator role to the users listed in {@code app.admin-usernames} (comma-separated) at startup.
- * Moderators handle reports through /admin/reports (e.g. from Swagger UI).
+ * Makes exactly the users listed in {@code app.admin-usernames} (ADMIN_USERNAMES in .env, comma-separated)
+ * moderators at startup: listed users get the role, everyone else loses it. Nobody becomes a moderator any
+ * other way. Moderators handle reports and feedback in the app (Profile → Moderation) or through /admin/**.
  */
 @Slf4j
 @Component
@@ -29,17 +34,24 @@ public class AdminBootstrap implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        for (String name : adminUsernames) {
-            if (name == null || name.isBlank()) {
-                continue;
+        Set<String> listed = adminUsernames.stream()
+                .filter(name -> name != null && !name.isBlank())
+                .map(String::strip)
+                .collect(Collectors.toSet());
+
+        for (Users admin : userRepository.findByRole(Role.ROLE_ADMIN)) {
+            if (!listed.contains(admin.getUsername())) {
+                admin.setRole(Role.ROLE_USER);
+                log.warn("Took the moderator role from {}: not in app.admin-usernames", admin.getUsername());
             }
-            userRepository.findByUsername(name.strip()).ifPresentOrElse(user -> {
+        }
+        for (String name : listed) {
+            userRepository.findByUsername(name).ifPresentOrElse(user -> {
                 if (user.getRole() != Role.ROLE_ADMIN) {
                     user.setRole(Role.ROLE_ADMIN);
-                    userRepository.save(user);
                     log.info("Gave moderator role to {}", user.getUsername());
                 }
-            }, () -> log.warn("app.admin-usernames: user {} doesn't exist (yet)", name.strip()));
+            }, () -> log.warn("app.admin-usernames: user {} doesn't exist (yet)", name));
         }
     }
 }

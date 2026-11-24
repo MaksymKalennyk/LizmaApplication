@@ -41,6 +41,13 @@ public class MusicAccountController {
         return Map.of("message", "Spotify connected");
     }
 
+    @Operation(summary = "Disconnect Spotify: the stored tokens are deleted (posts stay)")
+    @DeleteMapping("/spotify")
+    public Map<String, String> spotifyDisconnect(@AuthenticationPrincipal Users me) {
+        musicAccountService.disconnectSpotify(me.getId());
+        return Map.of("message", "Spotify disconnected");
+    }
+
     @Operation(summary = "Get Apple Music developer token (for MusicKit on device)")
     @GetMapping("/apple/dev-token")
     public Map<String, String> appleDevToken() {

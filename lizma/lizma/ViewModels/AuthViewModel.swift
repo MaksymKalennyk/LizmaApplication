@@ -52,7 +52,9 @@ final class AuthViewModel: ObservableObject {
 
     func signOut() {
         AuthService.shared.signOut()
-        MusicStatusStore.shared.reset()
+        PreviewPlayer.shared.stop()
+        ModerationStore.shared.reset()
+        CurrentUserStore.shared.reset()
         resetForm()
         isSignedIn = false
     }
@@ -60,15 +62,17 @@ final class AuthViewModel: ObservableObject {
     /// The server deleted the account: back to the sign-in screen with a confirmation.
     func accountDeleted() {
         signOut()
-        notice = "Your account was deleted"
+        notice = String(localized: "Your account was deleted", bundle: .app)
     }
 
     private func handleSessionExpired() {
         guard isSignedIn else { return }
-        MusicStatusStore.shared.reset()
+        PreviewPlayer.shared.stop()
+        ModerationStore.shared.reset()
+        CurrentUserStore.shared.reset()
         resetForm()
         isSignedIn = false
-        error = "Session expired, please sign in again"
+        error = String(localized: "Session expired, please sign in again", bundle: .app)
     }
 
     private func resetForm() {

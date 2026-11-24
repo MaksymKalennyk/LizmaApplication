@@ -40,6 +40,26 @@ public class FriendshipService {
                 .toList();
     }
 
+    /**
+     * Ends a friendship; their posts leave each other's feeds. Requests between them are removed as well,
+     * so either of them can send a new one later. Safe to call when they aren't friends.
+     */
+    @Transactional
+    public void unfriend(Users me, String username) {
+        Users other = userService.getByUsername(username);
+        if (other.getId().equals(me.getId())) {
+            throw new InvalidActionException("You can't remove yourself from friends");
+        }
+        friendshipRepository.deleteBetween(me, other);
+        friendRequestRepository.deleteBetween(me, other);
+    }
+
+    /** Ids of the user's friends, in one query. */
+    @Transactional(readOnly = true)
+    public List<Long> getFriendIds(Users user) {
+        return friendshipRepository.findFriendIds(user.getId(), CONFIRMED);
+    }
+
     @Transactional(readOnly = true)
     public boolean areFriends(Users a, Users b) {
         return friendshipRepository.existsBetween(a, b, CONFIRMED);
