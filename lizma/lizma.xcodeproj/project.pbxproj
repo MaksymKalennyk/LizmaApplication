@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2167AF344ACDCC8BDB7D3A85 /* LizmaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 164D0C32E10374E49C2E13DF /* LizmaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		618FB9BD2E258AA000F01914 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +25,34 @@
 			remoteGlobalIDString = 618FB9AC2E258A9F00F01914;
 			remoteInfo = lizma;
 		};
+		D12A5A0F610A77C14101586C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 618FB9A52E258A9F00F01914 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C7C0EC6830548A94D6A4E363;
+			remoteInfo = LizmaWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2B66F98E4DBA5CE52D7B3B83 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2167AF344ACDCC8BDB7D3A85 /* LizmaWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		618FB9AD2E258A9F00F01914 /* lizma.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lizma.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		618FB9BC2E258AA000F01914 /* lizmaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = lizmaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		618FB9C62E258AA000F01914 /* lizmaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = lizmaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		164D0C32E10374E49C2E13DF /* LizmaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LizmaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -34,8 +60,17 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				lizma.entitlements,
 			);
 			target = 618FB9AC2E258A9F00F01914 /* lizma */;
+		};
+		895E45213198ED419E75EDFB /* Exceptions for "LizmaWidget" folder in "LizmaWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				LizmaWidget.entitlements,
+			);
+			target = C7C0EC6830548A94D6A4E363 /* LizmaWidget */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -56,6 +91,19 @@
 				611760412E649B36007E0C6F /* Exceptions for "lizma" folder in "lizma" target */,
 			);
 			path = lizma;
+			sourceTree = "<group>";
+		};
+		FC5C567EB2B8374590FE8CC7 /* LizmaWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				895E45213198ED419E75EDFB /* Exceptions for "LizmaWidget" folder in "LizmaWidget" target */,
+			);
+			path = LizmaWidget;
+			sourceTree = "<group>";
+		};
+		CFB75D8564A18B6FADD2D45A /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +130,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		726497F5D8ED1523FC1422A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -89,6 +144,8 @@
 			isa = PBXGroup;
 			children = (
 				61F7FE3C2E259CAE0036F530 /* lizma */,
+				FC5C567EB2B8374590FE8CC7 /* LizmaWidget */,
+				CFB75D8564A18B6FADD2D45A /* Shared */,
 				618FB9BF2E258AA000F01914 /* lizmaTests */,
 				618FB9C92E258AA000F01914 /* lizmaUITests */,
 				618FB9AE2E258A9F00F01914 /* Products */,
@@ -101,6 +158,7 @@
 				618FB9AD2E258A9F00F01914 /* lizma.app */,
 				618FB9BC2E258AA000F01914 /* lizmaTests.xctest */,
 				618FB9C62E258AA000F01914 /* lizmaUITests.xctest */,
+				164D0C32E10374E49C2E13DF /* LizmaWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,13 +173,16 @@
 				618FB9A92E258A9F00F01914 /* Sources */,
 				618FB9AA2E258A9F00F01914 /* Frameworks */,
 				618FB9AB2E258A9F00F01914 /* Resources */,
+				2B66F98E4DBA5CE52D7B3B83 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				176C13704CEAE019A56B7133 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				61F7FE3C2E259CAE0036F530 /* lizma */,
+				CFB75D8564A18B6FADD2D45A /* Shared */,
 			);
 			name = lizma;
 			packageProductDependencies = (
@@ -176,6 +237,29 @@
 			productReference = 618FB9C62E258AA000F01914 /* lizmaUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C7C0EC6830548A94D6A4E363 /* LizmaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C07E125AA3FAAC2AEA7A4565 /* Build configuration list for PBXNativeTarget "LizmaWidget" */;
+			buildPhases = (
+				026AB17F3458A1C2487E7CB1 /* Sources */,
+				726497F5D8ED1523FC1422A9 /* Frameworks */,
+				81BD764AF8AA8B38437F59FE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC5C567EB2B8374590FE8CC7 /* LizmaWidget */,
+				CFB75D8564A18B6FADD2D45A /* Shared */,
+			);
+			name = LizmaWidget;
+			packageProductDependencies = (
+			);
+			productName = LizmaWidget;
+			productReference = 164D0C32E10374E49C2E13DF /* LizmaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -197,6 +281,9 @@
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 618FB9AC2E258A9F00F01914;
 					};
+					C7C0EC6830548A94D6A4E363 = {
+						CreatedOnToolsVersion = 26.0;
+					};
 				};
 			};
 			buildConfigurationList = 618FB9A82E258A9F00F01914 /* Build configuration list for PBXProject "lizma" */;
@@ -217,6 +304,7 @@
 				618FB9AC2E258A9F00F01914 /* lizma */,
 				618FB9BB2E258AA000F01914 /* lizmaTests */,
 				618FB9C52E258AA000F01914 /* lizmaUITests */,
+				C7C0EC6830548A94D6A4E363 /* LizmaWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -237,6 +325,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		618FB9C42E258AA000F01914 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		81BD764AF8AA8B38437F59FE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -267,6 +362,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		026AB17F3458A1C2487E7CB1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -279,6 +381,11 @@
 			isa = PBXTargetDependency;
 			target = 618FB9AC2E258A9F00F01914 /* lizma */;
 			targetProxy = 618FB9C72E258AA000F01914 /* PBXContainerItemProxy */;
+		};
+		176C13704CEAE019A56B7133 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C7C0EC6830548A94D6A4E363 /* LizmaWidget */;
+			targetProxy = D12A5A0F610A77C14101586C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -415,6 +522,7 @@
 				DEVELOPMENT_TEAM = M93U2869V9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = lizma/lizma.entitlements;
 				INFOPLIST_FILE = lizma/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -446,6 +554,7 @@
 				DEVELOPMENT_TEAM = M93U2869V9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = lizma/lizma.entitlements;
 				INFOPLIST_FILE = lizma/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -538,6 +647,60 @@
 			};
 			name = Release;
 		};
+		E2BC4B841B7FE80BA2CBBD1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LizmaWidget/LizmaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M93U2869V9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LizmaWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lizma;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "maxos-industry.lizma.LizmaWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8D5CC34485A258421F7F9FC1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LizmaWidget/LizmaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M93U2869V9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LizmaWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lizma;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "maxos-industry.lizma.LizmaWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -573,6 +736,15 @@
 			buildConfigurations = (
 				618FB9D72E258AA000F01914 /* Debug */,
 				618FB9D82E258AA000F01914 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C07E125AA3FAAC2AEA7A4565 /* Build configuration list for PBXNativeTarget "LizmaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2BC4B841B7FE80BA2CBBD1D /* Debug */,
+				8D5CC34485A258421F7F9FC1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

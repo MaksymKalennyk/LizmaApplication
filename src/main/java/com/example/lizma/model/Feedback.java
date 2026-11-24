@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /** An idea, a problem or anything else a user sent from the app; read by moderators. */
 @Entity
@@ -50,4 +52,10 @@ public class Feedback {
 
     /** When it went out in a notification email; null until then. */
     private Instant notifiedAt;
+
+    /** Screenshots the author attached, oldest first (see Attachment). */
+    @OneToMany(mappedBy = "feedback")
+    @OrderBy("createdAt")
+    @Builder.Default
+    private List<Attachment> attachments = new ArrayList<>();
 }

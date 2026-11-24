@@ -4,6 +4,7 @@ import com.example.lizma.model.enums.FeedbackCategory;
 import com.example.lizma.model.enums.FeedbackStatus;
 
 import java.time.Instant;
+import java.util.List;
 
 /** Feedback as moderators see it. */
 public record FeedbackView(
@@ -17,5 +18,7 @@ public record FeedbackView(
         FeedbackStatus status,
         Instant createdAt,
         Instant handledAt,
-        String handledByUsername) {
+        String handledByUsername,
+        /** Screenshots, for moderators: /admin/attachments/{token}.jpg. */
+        List<String> attachments) {
 }

@@ -105,6 +105,42 @@ xcrun simctl push booted maxos-industry.lizma payload.apns
 
 with a payload like `{"aps": {"alert": {"loc-key": "PUSH_COMMENT", "loc-args": ["Liza", "Love it"]}}, "type": "comment", "postId": 1}`.
 
+## Screenshots and emoji
+
+Reports and feedback can carry up to 3 screenshots. The app uploads each one first (`POST /user/attachments`, JPEG or
+PNG up to 10 MB) and sends their ids as `attachmentIds`. The server keeps them as JPEGs of at most 2000 px, without
+metadata (`UploadedImages`), linked to that report or feedback. Only moderators can open them
+(`GET /admin/attachments/{id}.jpg`, never cached by shared caches). The moderators' email says how many there are but
+doesn't carry them. Uploads that were never sent are deleted after a day (`app.attachments.cleanup-cron`). They also go
+with the account of whoever sent them, and with the reports about an account that's deleted.
+
+Reactions take any single emoji, however it's built: skin tones, joined sequences, flags, keycaps, and ones newer than
+the server's Java (`PostService.isSingleEmoji`). Text or two emoji aren't a reaction. Comments keep every emoji as
+written (the database is utf8mb4). The emoji picker has a few rows of favourites, plus a field that opens the phone's
+own emoji keyboard, with its search, skin tones and recently used.
+
+## Home screen widget
+
+The `LizmaWidget` extension shows friends' latest songs: on the home screen the newest one (small), two (medium) or four
+(large), each with its cover, who shared it and how long ago; on the lock screen who and what. A tap opens that post in
+the app (`lizma://post/<id>`).
+
+The widget never gets the user's tokens. After signing in, the app asks the server for a widget key
+(`POST /user/me/widget-key` with the session's refresh token) and puts it, with the server address and the app's
+language, in the App Group `group.maxos-industry.lizma` that the app and the widget share (`lizma/Shared`). The widget
+calls `GET /widget/feed` with the `X-Widget-Key` header, which returns friends' latest 4 posts and nothing else, and keeps
+the last songs and pictures in the group's folder for when the phone is offline. The server stores only the key's SHA-256.
+The key belongs to that sign-in: signing out, the session ending, suspension and account deletion make it useless (401,
+and the widget asks to open Lizma), and keys of ended sessions are deleted every night (`app.widgets.cleanup-cron`).
+
+iOS decides when a widget refreshes; this one asks for about every 15 minutes. The app also refreshes it whenever it's
+opened, and when someone posts, the server sends a silent push to those friends whose widget fetched in the last 3 days
+(at most one per phone in 15 minutes), so the widget catches up without the app being opened. That push needs APNs like
+the notifications: in the simulator `xcrun simctl push` doesn't reach an app that has no push token, so there opening the
+app is what refreshes it. To try the widget in the simulator, add it in the Today View (swipe right on the first home
+screen page, long-press, Edit → Add Widget): dropping a widget onto the home screen grid can crash SpringBoard in the
+iOS 26.3 simulator (an Apple bug in its ripple animation). Dragging a widget's corner in edit mode changes its size.
+
 ## Moderation
 
 Users report posts, comments and users, and send feedback (ideas, problems; optionally with an email for an answer).
@@ -154,7 +190,8 @@ its own domain only changes these settings.
 ## Before the App Store (needs the paid Apple Developer Program)
 
 Done and tested without the paid account: push notifications end to end on the server (with a stand-in for APNs) and in
-the simulator (`xcrun simctl push`). Still to do and check once the account exists:
+the simulator (`xcrun simctl push`), and the home screen widget in the simulator. Still to do and check once the account
+exists:
 
 - **Signing**: the team in Xcode, the App ID `maxos-industry.lizma` registered.
 - **Push capability**: Signing & Capabilities → + Push Notifications (adds `aps-environment`).
@@ -166,6 +203,10 @@ the simulator (`xcrun simctl push`). Still to do and check once the account exis
   tap opens the right screen. Then check that Profile → Notifications switches each kind off, that signing out removes
   the token, and that the texts come in Ukrainian on a Ukrainian phone. For the 13:00 Kyiv reminder, set
   `app.push.daily-reminder-cron` to a time a few minutes ahead.
+- **Widget on an iPhone**: automatic signing registers the App Group for both App IDs (`maxos-industry.lizma` and
+  `maxos-industry.lizma.LizmaWidget`; the free account can do this too, only the silent push needs the paid one). Add the
+  widget while signed in and check that friends' songs show, that a friend's new post reaches it within a minute or so
+  with Lizma in the background (not swiped away), and that signing out turns it into "Open Lizma to sign in".
 - **TestFlight build** (production APNs): the same checks, the token arrives as `PRODUCTION`.
 - **App icon**: the app has none yet. Add an asset catalog with a 1024×1024 AppIcon (required for upload).
 - **Server online before TestFlight testers and App Review**: a public HTTPS domain, set in
@@ -178,7 +219,9 @@ the simulator (`xcrun simctl push`). Still to do and check once the account exis
   moderation with a demo account that has a friend and posts.
 - **Export compliance**: the app uses only HTTPS, so `ITSAppUsesNonExemptEncryption = NO` in Info.plist saves the
   question on every upload.
-- **Optional**: full in-app Apple Music playback (MusicKit service on the App ID); a song.link key for exact Spotify links.
+- **Optional**: full in-app Apple Music playback (MusicKit service on the App ID); a song.link key for exact Spotify links;
+  once the app needs iOS 26 anyway, WidgetKit push updates (`apns-push-type: widgets`) instead of the silent push, which
+  also reach the widget after the app was swiped away.
 
 ## Configuration
 
@@ -192,6 +235,7 @@ the simulator (`xcrun simctl push`). Still to do and check once the account exis
 | `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_KEY_PATH` (or `APNS_KEY`), `APNS_TOPIC` | `.env` | Push notifications through APNs (see Push notifications); without them they are only logged |
 | `ODESLI_API_KEY` | `.env` | song.link key for exact Spotify links (see Music); optional |
 | `app.push.daily-reminder-cron`, `app.push.daily-reminder-zone` | `application.properties` | When the daily reminder goes out (`0 0 13 * * *`, `Europe/Kyiv`) |
+| `app.widgets.cleanup-cron` | `application.properties` | When widget keys of ended sign-ins are deleted (`0 45 4 * * *`) |
 | `token.ttl`, `token.refresh-ttl` | `application.properties` | Access token (`15m`) and session (`30d`) lifetimes |
 | `app.auth.*` | `application.properties` | Sign-in and sign-up limits |
 | `app.externalBaseUrl` | `application.properties` | Base URL used in invite links |

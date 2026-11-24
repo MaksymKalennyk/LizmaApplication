@@ -61,6 +61,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/legal", "/privacy", "/terms").permitAll()
                         .requestMatchers(HttpMethod.GET, "/avatars/**").permitAll()
+                        // The home screen widget signs in with its own key (X-Widget-Key), checked by WidgetController.
+                        .requestMatchers(HttpMethod.GET, "/widget/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, invitesPathPrefix + "/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

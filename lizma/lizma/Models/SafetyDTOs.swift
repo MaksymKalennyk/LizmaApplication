@@ -49,6 +49,8 @@ struct ReportRequest: Encodable {
     let targetId: Int64
     let reason: ReportReason
     let details: String?
+    /// Screenshots uploaded before (`AttachmentService`), at most three.
+    var attachmentIds: [String] = []
 }
 
 /// `POST /user/me/delete`.

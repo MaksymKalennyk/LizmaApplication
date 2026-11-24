@@ -10,33 +10,9 @@ struct EmojiPickerView: View {
         (String(localized: "All", bundle: .app), ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "🥲", "☺️", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾"])
     ]
 
-    /// Every emoji once, in display order (the sections overlap).
-    private static let allEmojis: [String] = {
-        var seen = Set<String>()
-        return emojiSections.flatMap(\.emojis).filter { seen.insert($0).inserted }
-    }()
-
     let columns = [
         GridItem(.adaptive(minimum: 44, maximum: 60), spacing: 12)
     ]
-
-    @State private var searchText = ""
-
-    private var visibleSections: [(title: String, emojis: [String])] {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return Self.emojiSections }
-        let matches = Self.allEmojis.filter { Self.emoji($0, matches: query) }
-        return matches.isEmpty ? [] : [(String(localized: "Results", bundle: .app), matches)]
-    }
-
-    /// Matches the Unicode names of the emoji's scalars, e.g. "fire" → 🔥, "heart" → ❤️ 💛 💗 …
-    private static func emoji(_ emoji: String, matches query: String) -> Bool {
-        emoji.unicodeScalars.contains { scalar in
-            // Skip joiners/variation selectors, whose names ("ZERO WIDTH JOINER") would match nonsense.
-            scalar.properties.isEmoji
-                && (scalar.properties.name?.localizedCaseInsensitiveContains(query) ?? false)
-        }
-    }
 
     private struct Cell: Identifiable {
         let id: String
@@ -51,15 +27,32 @@ struct EmojiPickerView: View {
         }
     }
 
+    /// Every other emoji: the phone's emoji keyboard, with its own search, skin tones and recently used.
+    private var anyEmojiField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "face.smiling")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            EmojiKeyboardField(placeholder: String(localized: "Any emoji: tap for the emoji keyboard", bundle: .app)) { emoji in
+                onSelect(emoji)
+                dismiss()
+            }
+            .frame(height: 22)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(.fill.tertiary, in: Capsule())
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                if visibleSections.isEmpty {
-                    ContentUnavailableView.search(text: searchText)
-                        .padding(.top, 40)
-                } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    anyEmojiField
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 20) {
-                        ForEach(visibleSections, id: \.title) { section in
+                        ForEach(Self.emojiSections, id: \.title) { section in
                             Section(header: Text(section.title)
                                         .font(.headline)
                                         .foregroundColor(.secondary)
@@ -81,7 +74,6 @@ struct EmojiPickerView: View {
                     .padding()
                 }
             }
-            .searchable(text: $searchText, prompt: "Search emoji")
             .navigationTitle("React")
             .navigationBarTitleDisplayMode(.inline)
             .scrollDismissesKeyboard(.interactively)

@@ -203,6 +203,7 @@ public class ModerationMailer {
                 if (report.details() != null) {
                     body.append("  Details: ").append(quote(report.details())).append('\n');
                 }
+                body.append(screenshots(report.attachments()));
                 body.append("  Reported by @").append(report.reporterUsername())
                         .append(" on ").append(TIME.format(report.createdAt())).append("\n\n");
             }
@@ -213,7 +214,8 @@ public class ModerationMailer {
                 body.append("#").append(item.id()).append("  ").append(categoryTitle(item))
                         .append(" from @").append(item.authorUsername())
                         .append("  ·  ").append(TIME.format(item.createdAt())).append(versions(item)).append('\n');
-                body.append(indent(item.message())).append("\n\n");
+                body.append(indent(item.message())).append('\n');
+                body.append(screenshots(item.attachments())).append('\n');
             }
         }
         body.append("Handle them in the app: Profile → Moderation.\n");
@@ -224,8 +226,18 @@ public class ModerationMailer {
         return categoryTitle(feedback) + " from @" + feedback.authorUsername()
                 + "  ·  " + TIME.format(feedback.createdAt()) + versions(feedback) + "\n\n"
                 + feedback.message() + "\n\n"
+                + screenshots(feedback.attachments()).strip() + (feedback.attachments().isEmpty() ? "" : "\n\n")
                 + "Reply to this email to answer them at " + feedback.contactEmail() + ".\n"
                 + "Mark it as done in the app: Profile → Moderation → Feedback.\n";
+    }
+
+    /** Screenshots stay on the server (they may show someone's private screen): the mail only says there are some. */
+    private static String screenshots(List<String> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return "";
+        }
+        int count = attachments.size();
+        return "  " + (count == 1 ? "1 screenshot: open it" : count + " screenshots: open them") + " in the app, Profile → Moderation\n";
     }
 
     private static String describeTarget(ReportView report) {

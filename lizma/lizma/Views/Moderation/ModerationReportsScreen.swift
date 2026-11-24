@@ -255,6 +255,10 @@ struct ReportGroupScreen: View {
                             Text(details)
                                 .textSelection(.enabled)
                         }
+                        if let screenshots = report.attachments, !screenshots.isEmpty {
+                            ScreenshotStrip(paths: screenshots)
+                                .padding(.vertical, 4)
+                        }
                         Text("by \(report.reporterUsername) · \(RelativeTime.string(from: report.createdAt))")
                             .font(.caption)
                             .foregroundStyle(.secondary)

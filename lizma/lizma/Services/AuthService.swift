@@ -28,6 +28,9 @@ final class AuthService {
 
     private var refreshToken: String? { try? Keychain.get(Self.refreshTokenKey) }
 
+    /// The current refresh token: the server recognises this phone's sign-in by it (the widget's key belongs to it).
+    var currentRefreshToken: String? { refreshToken }
+
     /// Username of the signed-in user, read from the token.
     var currentUsername: String? { token.flatMap(JWT.username(from:)) }
 
