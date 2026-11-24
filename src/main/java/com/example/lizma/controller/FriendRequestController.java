@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user/friend-requests")
@@ -42,6 +43,13 @@ public class FriendRequestController {
         return friendRequestService.getSentFriendRequests(me.getId()).stream()
                 .map(friendRequestMapper::toDto)
                 .toList();
+    }
+
+    @Operation(summary = "Cancel a friend request you sent that hasn't been answered yet")
+    @DeleteMapping("/{requestId}")
+    public Map<String, String> cancel(@PathVariable Long requestId, @AuthenticationPrincipal Users me) {
+        friendRequestService.cancelFriendRequest(requestId, me.getId());
+        return Map.of("message", "Friend request cancelled");
     }
 
     @Operation(summary = "Respond to a friend request: status=ACCEPTED or DECLINED")

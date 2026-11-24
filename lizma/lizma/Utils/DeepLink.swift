@@ -10,8 +10,7 @@ enum DeepLink {
         charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
     )
 
-    /// Parses an invite link `lizma://i/<token>`. Anything else (e.g. `lizma://oauth-callback/spotify`)
-    /// is not an invite.
+    /// Parses an invite link `lizma://i/<token>`. Anything else is not an invite.
     static func parseInviteToken(from url: URL) -> String? {
         guard url.scheme?.lowercased() == "lizma", url.host?.lowercased() == "i" else { return nil }
         let comps = url.pathComponents.filter { $0 != "/" }

@@ -8,17 +8,17 @@ struct ReportTarget: Identifiable {
 
     var title: String {
         switch type {
-        case .post: return "Report post"
-        case .comment: return "Report comment"
-        case .user: return "Report user"
+        case .post: return String(localized: "report.title.post", defaultValue: "Report post", bundle: .app, comment: "Title of the report form, between Cancel and Submit")
+        case .comment: return String(localized: "report.title.comment", defaultValue: "Report comment", bundle: .app, comment: "Title of the report form, between Cancel and Submit")
+        case .user: return String(localized: "report.title.user", defaultValue: "Report user", bundle: .app, comment: "Title of the report form, between Cancel and Submit")
         }
     }
 
     fileprivate var question: String {
         switch type {
-        case .post: return "Why are you reporting this post?"
-        case .comment: return "Why are you reporting this comment?"
-        case .user: return "Why are you reporting this user?"
+        case .post: return String(localized: "Why are you reporting this post?", bundle: .app)
+        case .comment: return String(localized: "Why are you reporting this comment?", bundle: .app)
+        case .user: return String(localized: "Why are you reporting this user?", bundle: .app)
         }
     }
 }

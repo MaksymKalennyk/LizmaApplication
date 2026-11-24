@@ -11,10 +11,10 @@ struct DeleteAccountView: View {
     @State private var isConfirming = false
 
     private let deletedItems = [
-        ("music.note.list", "Your posts"),
-        ("bubble.left.and.bubble.right", "Your comments and reactions"),
-        ("person.2", "Your friends and friend requests"),
-        ("music.quarternote.3", "Your connected music accounts")
+        ("music.note.list", String(localized: "Your posts", bundle: .app)),
+        ("bubble.left.and.bubble.right", String(localized: "Your comments and reactions", bundle: .app)),
+        ("person.2", String(localized: "Your friends and friend requests", bundle: .app)),
+        ("music.quarternote.3", String(localized: "Your connected music accounts", bundle: .app))
     ]
 
     var body: some View {

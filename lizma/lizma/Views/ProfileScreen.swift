@@ -3,36 +3,73 @@ import SwiftUI
 struct ProfileScreen: View {
     @EnvironmentObject private var auth: AuthViewModel
     @ObservedObject private var legal = LegalInfoStore.shared
+    @ObservedObject private var moderation = ModerationStore.shared
+    @ObservedObject private var currentUser = CurrentUserStore.shared
+    @ObservedObject private var language = LanguageStore.shared
 
     @State private var username: String? = nil
     @State private var showDeleteAccount = false
     @State private var isConfirmingSignOut = false
     @State private var safariLink: SafariLink? = nil
+    @State private var showFeedbackForm = false
 
     var body: some View {
         NavigationStack {
             Form {
                 if let username {
+                    // Opens your own profile page: photo, name and your posts.
                     Section {
-                        HStack(spacing: 14) {
-                            AvatarView(username: username, size: 56)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(username)
-                                    .font(.title3.weight(.semibold))
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                Text("Your username")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                        NavigationLink {
+                            UserProfileScreen(username: username)
+                        } label: {
+                            HStack(spacing: 14) {
+                                AvatarView(username: username, imageURL: currentUser.me?.avatarUrl, size: 56)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(currentUser.me?.displayName ?? username)
+                                        .font(.title3.weight(.semibold))
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Text("Profile and my posts")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                }
+
+                // Only moderators (the server's admin list) see this.
+                if moderation.isModerator {
+                    Section {
+                        NavigationLink {
+                            ModerationScreen()
+                        } label: {
+                            HStack {
+                                Label("Moderation", systemImage: "shield.lefthalf.filled")
+                                Spacer(minLength: 8)
+                                CountBadge(count: moderation.summary?.total ?? 0)
                             }
                         }
-                        .padding(.vertical, 4)
-                        .accessibilityElement(children: .combine)
                     }
                 }
 
                 Section {
-                    MusicAccountsStatusRow()
+                    NavigationLink {
+                        NotificationSettingsView()
+                    } label: {
+                        Label("Notifications", systemImage: "bell")
+                    }
+                    NavigationLink {
+                        LanguageSettingsView()
+                    } label: {
+                        LabeledContent {
+                            Text(verbatim: AppLanguage.endonym(of: language.code))
+                        } label: {
+                            Label("Language", systemImage: "globe")
+                        }
+                    }
                 }
 
                 Section("Privacy & safety") {
@@ -53,6 +90,11 @@ struct ProfileScreen: View {
                         open(legal.privacyURL)
                     } label: {
                         Label("Privacy Policy", systemImage: "lock.shield")
+                    }
+                    Button {
+                        showFeedbackForm = true
+                    } label: {
+                        Label("Send feedback", systemImage: "lightbulb")
                     }
                     if let supportMail = legal.supportMailURL {
                         Link(destination: supportMail) {
@@ -90,13 +132,21 @@ struct ProfileScreen: View {
             }
             .navigationTitle("Profile")
             .refreshable {
-                await MusicStatusStore.shared.refresh()
+                await currentUser.refresh()
                 await legal.loadIfNeeded()
+                await moderation.refresh()
             }
         }
         .task {
             username = AuthService.shared.currentUsername
             await legal.loadIfNeeded()
+        }
+        .task {
+            await moderation.refresh()
+            await currentUser.refresh()
+        }
+        .sheet(isPresented: $showFeedbackForm) {
+            FeedbackFormView()
         }
         .sheet(isPresented: $showDeleteAccount) {
             DeleteAccountView()

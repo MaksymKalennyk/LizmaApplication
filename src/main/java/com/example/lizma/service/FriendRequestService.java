@@ -12,6 +12,7 @@ import com.example.lizma.model.Users;
 import com.example.lizma.model.enums.FriendRequestStatus;
 import com.example.lizma.repo.FriendRequestRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class FriendRequestService {
     private final FriendshipService friendshipService;
     private final UserService userService;
     private final BlockService blockService;
+    private final ApplicationEventPublisher events;
 
     @Transactional
     public SendResult sendFriendRequest(Long requesterId, Long recipientId) {
@@ -53,6 +55,7 @@ public class FriendRequestService {
         // The other user has already asked us: accept that instead of creating a mirrored request.
         if (friendRequestRepository.findByRequesterAndRecipientAndStatus(recipient, requester, PENDING).isPresent()) {
             friendshipService.befriend(requester, recipient);
+            events.publishEvent(new ActivityEvent.BecameFriends(requesterId, recipientId));
             return SendResult.BECAME_FRIENDS;
         }
 
@@ -63,6 +66,7 @@ public class FriendRequestService {
                 throw new FriendRequestAlreadyExistsException("Friend request already sent");
             }
             request.setStatus(PENDING); // sending again after it was declined
+            events.publishEvent(new ActivityEvent.FriendRequestSent(requesterId, recipientId));
             return SendResult.SENT;
         }
 
@@ -71,6 +75,7 @@ public class FriendRequestService {
                 .recipient(recipient)
                 .status(PENDING)
                 .build());
+        events.publishEvent(new ActivityEvent.FriendRequestSent(requesterId, recipientId));
         return SendResult.SENT;
     }
 
@@ -100,9 +105,27 @@ public class FriendRequestService {
 
         if (answer == ACCEPTED) {
             friendshipService.befriend(request.getRequester(), request.getRecipient()); // also marks the request accepted
+            events.publishEvent(new ActivityEvent.BecameFriends(userId, request.getRequester().getId()));
         } else {
             request.setStatus(DECLINED);
         }
+    }
+
+    /**
+     * The sender takes back a request that hasn't been answered: it disappears for the recipient too,
+     * and a new one can be sent later. Only pending requests can be cancelled.
+     */
+    @Transactional
+    public void cancelFriendRequest(Long requestId, Long userId) {
+        FriendRequest request = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new FriendRequestNotFoundException("Friend request not found"));
+        if (!request.getRequester().getId().equals(userId)) {
+            throw new UnauthorizedActionException("You can only cancel requests you sent");
+        }
+        if (request.getStatus() != PENDING) {
+            throw new FriendRequestAlreadyProcessedException("This friend request has already been processed");
+        }
+        friendRequestRepository.delete(request);
     }
 
     private static FriendRequestStatus parseAnswer(String status) {

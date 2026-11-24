@@ -20,6 +20,8 @@ struct FriendsScreen: View {
     @State private var sharePayload: SharePayload? = nil
     @State private var reportTarget: ReportTarget? = nil
     @State private var blockTarget: BlockTarget? = nil
+    /// The profile opened from a search result or a request.
+    @State private var profileUsername: String? = nil
 
     private var friendIDs: Set<Int64> {
         Set(vm.friends.map { $0.friendId })
@@ -65,6 +67,9 @@ struct FriendsScreen: View {
                 scheduleSearch(for: newValue)
             }
             .refreshable { await reloadAll() }
+            .navigationDestination(item: $profileUsername) { username in
+                UserProfileScreen(username: username)
+            }
         }
         .sheet(item: $sharePayload) { payload in
             ShareSheet(activityItems: payload.items)
@@ -97,7 +102,8 @@ struct FriendsScreen: View {
                     IncomingRequestRow(request: request,
                                        isBusy: requests.inFlight.contains(request.id),
                                        accept: { Task { await requests.accept(request) } },
-                                       decline: { Task { await requests.reject(request) } })
+                                       decline: { Task { await requests.reject(request) } },
+                                       openProfile: { profileUsername = request.requesterUsername })
                         // A declined request can be sent again, so an unwanted sender can also be blocked.
                         .modifier(SafetyActions(report: { report(userId: request.requesterId) },
                                                 block: { block(userId: request.requesterId,
@@ -112,7 +118,10 @@ struct FriendsScreen: View {
         if !requests.sent.isEmpty {
             Section("Sent requests") {
                 ForEach(requests.sent) { request in
-                    SentRequestRow(request: request)
+                    SentRequestRow(request: request,
+                                   isBusy: requests.inFlight.contains(request.id),
+                                   cancel: { Task { await requests.cancel(request) } },
+                                   openProfile: { profileUsername = request.recipientUsername })
                 }
             }
         }
@@ -171,16 +180,17 @@ struct FriendsScreen: View {
                 )
             }
         } else {
-            Section(vm.friends.count == 1 ? "1 friend" : "\(vm.friends.count) friends") {
+            Section("\(vm.friends.count) friends") {
                 ForEach(vm.friends) { friend in
-                    HStack(spacing: 12) {
-                        AvatarView(username: friend.friendUsername)
-                        Text(friend.friendUsername)
-                            .font(.body.weight(.medium))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
+                    NavigationLink {
+                        UserProfileScreen(username: friend.friendUsername)
+                    } label: {
+                        UserLabel(username: friend.friendUsername, displayName: friend.friendDisplayName,
+                                  avatarUrl: friend.friendAvatarUrl)
                     }
-                    .modifier(SafetyActions(report: { report(userId: friend.friendId) },
+                    .modifier(SafetyActions(friendName: friend.friendUsername,
+                                            onRemoveFriend: { Task { await removeFriend(friend) } },
+                                            report: { report(userId: friend.friendId) },
                                             block: { block(userId: friend.friendId,
                                                            username: friend.friendUsername) }))
                 }
@@ -219,12 +229,13 @@ struct FriendsScreen: View {
 
     private func userRow(_ user: UserDto) -> some View {
         HStack(spacing: 12) {
-            AvatarView(username: user.username)
-
-            Text(user.username)
-                .font(.body.weight(.medium))
-                .lineLimit(1)
-                .truncationMode(.middle)
+            Button {
+                profileUsername = user.username
+            } label: {
+                UserLabel(username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
 
             Spacer(minLength: 8)
 
@@ -308,7 +319,7 @@ struct FriendsScreen: View {
                 let reply = try await FriendService.shared.sendRequest(to: user.id)
                 if reply.trimmingCharacters(in: .whitespacesAndNewlines) == FriendService.becameFriendsReply {
                     // They had already asked us, so the server accepted their request instead.
-                    notice = .info("You and \(user.username) are now friends!")
+                    notice = .info(String(localized: "You and \(user.username) are now friends!", bundle: .app))
                     NotificationCenter.default.post(name: .friendsChanged, object: nil)
                 } else {
                     withAnimation { _ = addedUserIDs.insert(user.id) }
@@ -331,7 +342,7 @@ struct FriendsScreen: View {
             do {
                 let invite = try await FriendService.shared.createInvite()
                 guard let url = invite.shareURL else {
-                    notice = .error("Couldn't create an invite link. Please try again.")
+                    notice = .error(String(localized: "Couldn't create an invite link. Please try again.", bundle: .app))
                     return
                 }
                 sharePayload = SharePayload(items: [url])
@@ -359,19 +370,46 @@ struct FriendsScreen: View {
         reportTarget = ReportTarget(type: .user, targetId: userId)
     }
 
+    private func removeFriend(_ friend: FriendshipDto) async {
+        do {
+            try await FriendService.shared.removeFriend(username: friend.friendUsername)
+            notice = nil
+            vm.friends.removeAll { $0.friendId == friend.friendId }
+            // The feed drops their posts.
+            NotificationCenter.default.post(name: .friendsChanged, object: nil)
+        } catch {
+            guard !error.isCancellation else { return }
+            notice = .error(String(localized: "Couldn't remove \(friend.friendUsername): \(error.userMessage)", bundle: .app))
+        }
+    }
+
     private func block(userId: Int64, username: String) {
         blockTarget = BlockTarget(userId: userId, username: username)
     }
 }
 
-/// Report and block for a row with another user: in the long-press menu and as swipe actions.
+/// Report and block for a row with another user (and "Remove friend" on a friend's row): in the
+/// long-press menu and as swipe actions.
 private struct SafetyActions: ViewModifier {
+    /// Set on a friend's row: adds "Remove friend", which asks before `onRemoveFriend` runs.
+    var friendName: String? = nil
+    var onRemoveFriend: () -> Void = {}
     let report: () -> Void
     let block: () -> Void
+
+    @State private var isConfirmingRemove = false
 
     func body(content: Content) -> some View {
         content
             .contextMenu {
+                if friendName != nil {
+                    Button {
+                        isConfirmingRemove = true
+                    } label: {
+                        Label("Remove friend", systemImage: "person.badge.minus")
+                    }
+                    Divider()
+                }
                 Button(action: report) {
                     Label("Report user", systemImage: "exclamationmark.bubble")
                 }
@@ -389,6 +427,25 @@ private struct SafetyActions: ViewModifier {
                     Label("Report", systemImage: "exclamationmark.bubble")
                 }
                 .tint(.orange)
+                if friendName != nil {
+                    Button {
+                        isConfirmingRemove = true
+                    } label: {
+                        Label("Remove", systemImage: "person.badge.minus")
+                    }
+                    .tint(.gray)
+                }
+            }
+            // Attached to the row, so the question comes out of the friend it is about.
+            .confirmationDialog("Remove from friends?", isPresented: $isConfirmingRemove, titleVisibility: .visible) {
+                if let friendName {
+                    Button("Remove \(friendName)", role: .destructive, action: onRemoveFriend)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                if let friendName {
+                    Text("You and \(friendName) will stop seeing each other's posts. They won't be notified.")
+                }
             }
     }
 }

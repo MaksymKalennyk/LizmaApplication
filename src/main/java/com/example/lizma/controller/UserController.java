@@ -3,6 +3,9 @@ package com.example.lizma.controller;
 import com.example.lizma.exception.UserNotFoundException;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.dto.DeleteAccountRequest;
+import com.example.lizma.model.dto.MeResponse;
+import com.example.lizma.model.dto.UserCard;
+import com.example.lizma.model.enums.Role;
 import com.example.lizma.service.AccountService;
 import com.example.lizma.service.BlockService;
 import com.example.lizma.service.UserService;
@@ -25,9 +28,16 @@ public class UserController {
     private final BlockService blockService;
     private final AccountService accountService;
 
+    @Operation(summary = "The signed-in user; `admin` decides whether the app shows the moderation screens")
+    @GetMapping("/me")
+    public MeResponse me(@AuthenticationPrincipal Users me) {
+        return new MeResponse(me.getId(), me.getUsername(), me.getRole() == Role.ROLE_ADMIN,
+                me.getDisplayName(), UserCard.avatarUrl(me));
+    }
+
     @Operation(summary = "Find a user by exact username (blocked and suspended users are not found)")
     @GetMapping("/lookup")
-    public Map<String, Object> lookup(@RequestParam String username, @AuthenticationPrincipal Users me) {
+    public UserCard lookup(@RequestParam String username, @AuthenticationPrincipal Users me) {
         Users user = userService.getByUsername(username.strip());
         if (user.isBanned() || blockService.blockedEitherWay(me.getId(), user.getId())) {
             throw new UserNotFoundException("User not found");
@@ -37,7 +47,7 @@ public class UserController {
 
     @Operation(summary = "Search other users by part of the username (blocked and suspended users are left out)")
     @GetMapping("/search")
-    public List<Map<String, Object>> search(@RequestParam("query") String query,
+    public List<UserCard> search(@RequestParam("query") String query,
                                             @RequestParam(value = "limit", defaultValue = "20") int limit,
                                             @AuthenticationPrincipal Users me) {
         if (query.isBlank()) {
@@ -52,7 +62,7 @@ public class UserController {
 
     @Operation(summary = "Users you blocked")
     @GetMapping("/blocks")
-    public List<Map<String, Object>> blocked(@AuthenticationPrincipal Users me) {
+    public List<UserCard> blocked(@AuthenticationPrincipal Users me) {
         return blockService.blockedBy(me.getId()).stream().map(UserController::summary).toList();
     }
 
@@ -77,7 +87,7 @@ public class UserController {
         return Map.of("message", "Account deleted");
     }
 
-    private static Map<String, Object> summary(Users user) {
-        return Map.of("id", user.getId(), "username", user.getUsername());
+    private static UserCard summary(Users user) {
+        return UserCard.of(user);
     }
 }

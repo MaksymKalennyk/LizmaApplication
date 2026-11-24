@@ -12,15 +12,19 @@ import com.example.lizma.model.dto.CommentResponse;
 import com.example.lizma.model.dto.PostRequest;
 import com.example.lizma.model.dto.PostResponse;
 import com.example.lizma.model.dto.ReactionDetailResponse;
+import com.example.lizma.model.dto.UserCard;
 import com.example.lizma.repo.PostCommentRepository;
 import com.example.lizma.repo.PostReactionRepository;
 import com.example.lizma.repo.PostRepository;
 import lombok.RequiredArgsConstructor;
+import com.example.lizma.model.enums.MusicProvider;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +47,8 @@ public class PostService {
     private final FriendshipService friendshipService;
     private final BlockService blockService;
     private final ContentFilter contentFilter;
+    private final ContentCleanupService cleanupService;
+    private final ApplicationEventPublisher events;
 
     public PostResponse createPost(Long authorId, PostRequest request) {
         contentFilter.check(request.getCaption());
@@ -53,23 +59,36 @@ public class PostService {
                 .musicProvider(request.getMusicProvider())
                 .trackName(request.getTrackName().strip())
                 .artistName(request.getArtistName().strip())
-                .albumCoverUrl(blankToNull(request.getAlbumCoverUrl()))
+                .albumCoverUrl(TrustedMediaUrls.cover(request.getAlbumCoverUrl()))
+                .previewUrl(TrustedMediaUrls.preview(request.getPreviewUrl()))
+                .appleMusicUrl(TrustedMediaUrls.appleMusic(request.getAppleMusicUrl()))
                 .caption(blankToNull(request.getCaption()))
                 .build();
-        return toResponse(postRepository.save(post), author);
+        Post saved = postRepository.save(post);
+        // The same track in the other services is looked up once the post is saved (MusicLinkResolver).
+        events.publishEvent(new PostCreatedEvent(saved.getId(), author.getId()));
+        return toResponses(List.of(saved), author.getId()).get(0);
     }
 
-    /** Posts of the user's friends and the user's own posts, newest first. */
+    /**
+     * Posts of the user's friends and the user's own posts, newest first. With {@code beforeId} (the id of
+     * the last post the app has) the page continues after that post, so posts published meanwhile don't
+     * shift the pages; otherwise {@code page} counts pages from the newest post.
+     * <p>
+     * A fixed handful of queries whatever the page size: friends, posts with their authors, reaction
+     * counts, the viewer's reactions and comment counts.
+     */
     @Transactional(readOnly = true)
-    public List<PostResponse> getFeed(Long userId, int page, int size) {
+    public List<PostResponse> getFeed(Long userId, int page, int size, Long beforeId) {
         Users viewer = userService.getById(userId);
-        List<Users> authors = new ArrayList<>(friendshipService.getFriends(viewer));
-        authors.add(viewer);
+        Set<Long> authorIds = new HashSet<>(friendshipService.getFriendIds(viewer));
+        authorIds.add(viewer.getId());
 
-        var pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, MAX_PAGE_SIZE));
-        return postRepository.findByAuthorInOrderByCreatedAtDesc(authors, pageable).stream()
-                .map(post -> toResponse(post, viewer))
-                .toList();
+        int pageSize = Math.clamp(size, 1, MAX_PAGE_SIZE);
+        List<Post> posts = beforeId != null
+                ? postRepository.findFeedPageBefore(authorIds, beforeId, PageRequest.of(0, pageSize))
+                : postRepository.findFeedPage(authorIds, PageRequest.of(Math.max(page, 0), pageSize));
+        return toResponses(posts, viewer.getId());
     }
 
     /** Same emoji again removes the reaction, a different one replaces it. */
@@ -89,7 +108,10 @@ public class PostService {
                         existing.setType(reaction);
                     }
                 },
-                () -> reactionRepository.save(PostReaction.builder().post(post).user(user).type(reaction).build())
+                () -> {
+                    reactionRepository.save(PostReaction.builder().post(post).user(user).type(reaction).build());
+                    events.publishEvent(new ActivityEvent.PostReacted(post.getId(), user.getId(), reaction));
+                }
         );
     }
 
@@ -113,6 +135,7 @@ public class PostService {
                 .content(request.getContent().strip())
                 .parentComment(parent)
                 .build());
+        events.publishEvent(new ActivityEvent.CommentAdded(saved.getId()));
         return toCommentResponse(saved, author.getId(), List.of());
     }
 
@@ -164,10 +187,58 @@ public class PostService {
                 .map(reaction -> ReactionDetailResponse.builder()
                         .authorId(reaction.getUser().getId())
                         .authorUsername(reaction.getUser().getUsername())
+                        .authorDisplayName(reaction.getUser().getDisplayName())
+                        .authorAvatarUrl(UserCard.avatarUrl(reaction.getUser()))
                         .type(reactionType(reaction))
                         .createdAt(reaction.getCreatedAt())
                         .build())
                 .toList();
+    }
+
+    /** One post, if the viewer may see it (their own or a friend's). */
+    @Transactional(readOnly = true)
+    public PostResponse getPost(Long userId, Long postId) {
+        Users viewer = userService.getById(userId);
+        return toResponses(List.of(requireVisiblePost(postId, viewer)), viewer.getId()).get(0);
+    }
+
+    /** A user's posts, newest first, continuing after {@code beforeId} if given. Visibility is checked by the caller. */
+    @Transactional(readOnly = true)
+    public List<PostResponse> getPostsOf(Users author, Long viewerId, Long beforeId, int size) {
+        int pageSize = Math.clamp(size, 1, MAX_PAGE_SIZE);
+        Set<Long> authorIds = Set.of(author.getId());
+        List<Post> posts = beforeId != null
+                ? postRepository.findFeedPageBefore(authorIds, beforeId, PageRequest.of(0, pageSize))
+                : postRepository.findFeedPage(authorIds, PageRequest.of(0, pageSize));
+        return toResponses(posts, viewerId);
+    }
+
+    /** The author deletes their post with its comments and reactions. */
+    public void deletePost(Long userId, Long postId) {
+        Users user = userService.getById(userId);
+        Post post = requireVisiblePost(postId, user);
+        if (!post.getAuthor().getId().equals(user.getId())) {
+            throw new UnauthorizedActionException("You can only delete your own posts");
+        }
+        cleanupService.deletePost(post.getId());
+    }
+
+    /**
+     * Deletes a comment (a top-level one with its replies). Allowed for the comment's author and for the
+     * author of the post it is under.
+     */
+    public void deleteComment(Long userId, Long postId, Long commentId) {
+        Users user = userService.getById(userId);
+        Post post = requireVisiblePost(postId, user);
+        PostComment comment = commentRepository.findById(commentId)
+                .filter(c -> c.getPost().getId().equals(post.getId()))
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
+        boolean allowed = comment.getAuthor().getId().equals(user.getId())
+                || post.getAuthor().getId().equals(user.getId());
+        if (!allowed) {
+            throw new UnauthorizedActionException("You can only delete your own comments or comments on your posts");
+        }
+        cleanupService.deleteComment(comment.getId());
     }
 
     /** A post is visible to its author and the author's friends; for everyone else it doesn't exist (404). */
@@ -183,31 +254,50 @@ public class PostService {
         return post;
     }
 
-    private PostResponse toResponse(Post post, Users viewer) {
-        List<PostReaction> reactions = reactionRepository.findByPost(post);
-        Map<String, Long> reactionCounts = reactions.stream()
-                .collect(Collectors.groupingBy(PostService::reactionType, Collectors.counting()));
-        String viewerReaction = reactions.stream()
-                .filter(reaction -> reaction.getUser().getId().equals(viewer.getId()))
-                .map(PostService::reactionType)
-                .findFirst()
-                .orElse(null);
+    /** Responses for the posts, in their order, with counts loaded for all of them at once. */
+    private List<PostResponse> toResponses(List<Post> posts, Long viewerId) {
+        if (posts.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = posts.stream().map(Post::getId).toList();
 
-        return PostResponse.builder()
-                .id(post.getId())
-                .authorId(post.getAuthor().getId())
-                .authorUsername(post.getAuthor().getUsername())
-                .musicId(post.getMusicId())
-                .musicProvider(post.getMusicProvider())
-                .trackName(post.getTrackName())
-                .artistName(post.getArtistName())
-                .albumCoverUrl(post.getAlbumCoverUrl())
-                .createdAt(post.getCreatedAt())
-                .caption(post.getCaption())
-                .reactionsCount(reactionCounts)
-                .commentsCount(commentRepository.countByPost(post))
-                .currentUserReaction(viewerReaction)
-                .build();
+        Map<Long, Map<String, Long>> reactionCounts = new HashMap<>();
+        for (Object[] row : reactionRepository.countByPostAndType(ids)) {
+            // Old reactions without a type are hearts: they add up with the explicit ones.
+            reactionCounts.computeIfAbsent((Long) row[0], id -> new HashMap<>())
+                    .merge(row[1] != null ? (String) row[1] : DEFAULT_REACTION, (Long) row[2], Long::sum);
+        }
+        Map<Long, String> viewerReactions = new HashMap<>();
+        for (Object[] row : reactionRepository.findTypesOfUser(ids, viewerId)) {
+            viewerReactions.put((Long) row[0], row[1] != null ? (String) row[1] : DEFAULT_REACTION);
+        }
+        Map<Long, Long> commentCounts = new HashMap<>();
+        for (Object[] row : commentRepository.countByPostIds(ids)) {
+            commentCounts.put((Long) row[0], (Long) row[1]);
+        }
+
+        return posts.stream()
+                .map(post -> PostResponse.builder()
+                        .id(post.getId())
+                        .authorId(post.getAuthor().getId())
+                        .authorUsername(post.getAuthor().getUsername())
+                        .authorDisplayName(post.getAuthor().getDisplayName())
+                        .authorAvatarUrl(UserCard.avatarUrl(post.getAuthor()))
+                        .musicId(post.getMusicId())
+                        .musicProvider(post.getMusicProvider())
+                        .trackName(post.getTrackName())
+                        .artistName(post.getArtistName())
+                        .albumCoverUrl(post.getAlbumCoverUrl())
+                        .createdAt(post.getCreatedAt())
+                        .caption(post.getCaption())
+                        .previewUrl(post.getPreviewUrl())
+                        .appleMusicUrl(post.getAppleMusicUrl())
+                        .spotifyUrl(post.getSpotifyUrl() != null ? post.getSpotifyUrl() : spotifyTrackUrl(post))
+                        .reactionsCount(reactionCounts.getOrDefault(post.getId(), Map.of()))
+                        .commentsCount(commentCounts.getOrDefault(post.getId(), 0L))
+                        .currentUserReaction(viewerReactions.get(post.getId()))
+                        .build())
+                .toList();
     }
 
     private CommentResponse toCommentResponse(PostComment comment, Long viewerId, List<CommentResponse> replies) {
@@ -215,6 +305,8 @@ public class PostService {
                 .id(comment.getId())
                 .authorId(comment.getAuthor().getId())
                 .authorUsername(comment.getAuthor().getUsername())
+                .authorDisplayName(comment.getAuthor().getDisplayName())
+                .authorAvatarUrl(UserCard.avatarUrl(comment.getAuthor()))
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .parentId(comment.getParentComment() == null ? null : topLevel(comment).getId())
@@ -246,6 +338,15 @@ public class PostService {
             throw new InvalidActionException("Reaction is too long");
         }
         return reaction;
+    }
+
+    /** Posts made from Spotify's catalog link to their track even before the lookup ran. */
+    static String spotifyTrackUrl(Post post) {
+        if (post.getMusicProvider() != MusicProvider.SPOTIFY) {
+            return null;
+        }
+        String id = post.getMusicId().replace("spotify:track:", "").strip();
+        return id.matches("[A-Za-z0-9]+") ? "https://open.spotify.com/track/" + id : null;
     }
 
     private static String blankToNull(String value) {

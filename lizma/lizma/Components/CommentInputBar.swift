@@ -35,7 +35,6 @@ struct CommentInputBar: View {
                             .foregroundStyle(.white)
                     }
                 }
-                // Same height as a one-line field, so the two line up.
                 .frame(width: 38, height: 38)
                 .animation(.easeInOut(duration: 0.15), value: canSend)
             }

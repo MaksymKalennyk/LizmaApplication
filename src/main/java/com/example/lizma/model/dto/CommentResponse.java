@@ -10,6 +10,8 @@ public class CommentResponse {
     private Long id;
     private Long authorId;
     private String authorUsername;
+    private String authorDisplayName;
+    private String authorAvatarUrl;
     private String content;
     private Instant createdAt;
     private Long parentId;

@@ -42,6 +42,32 @@ public class Users implements UserDetails {
     /** When the user accepted the Terms of Use and Privacy Policy (at sign-up). */
     private Instant termsAcceptedAt;
 
+    /** Shown instead of the username where set; the username stays the unique handle. */
+    @Column(length = 50)
+    private String displayName;
+
+    /** The current profile photo (see UserAvatar), null without one. */
+    @Column(length = 40, unique = true)
+    private String avatarToken;
+
+    // What the user wants push notifications about (Profile -> Notifications); all on by default.
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean pushFriendRequests = true;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean pushReactions = true;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean pushComments = true;
+
+    /** "What are you listening to today?" at 13:00 Kyiv time, unless they've posted that day. */
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean pushDailyReminder = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

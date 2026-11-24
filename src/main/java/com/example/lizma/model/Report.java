@@ -1,5 +1,6 @@
 package com.example.lizma.model;
 
+import com.example.lizma.model.enums.ReportAction;
 import com.example.lizma.model.enums.ReportReason;
 import com.example.lizma.model.enums.ReportStatus;
 import com.example.lizma.model.enums.ReportTargetType;
@@ -46,4 +47,15 @@ public class Report {
     private Instant createdAt;
 
     private Instant resolvedAt;
+
+    /** What the moderator decided (null while open). */
+    @Enumerated(EnumType.STRING)
+    private ReportAction resolution;
+
+    /** Who decided; null while open or if that moderator's account is gone. */
+    @ManyToOne
+    private Users resolvedBy;
+
+    /** When it went out in a notification email; null until then. */
+    private Instant notifiedAt;
 }
