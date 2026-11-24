@@ -557,12 +557,32 @@
         }
       }
     },
+    "Add more" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати ще"
+          }
+        }
+      }
+    },
     "Add photo" : {
       "localizations" : {
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Додати фото"
+          }
+        }
+      }
+    },
+    "Add screenshots" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати скріншоти"
           }
         }
       }
@@ -603,6 +623,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уже маєте акаунт? Увійдіть"
+          }
+        }
+      }
+    },
+    "Any emoji: tap for the emoji keyboard" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Будь-який емодзі: торкніться для клавіатури емодзі"
           }
         }
       }
@@ -2514,6 +2544,16 @@
         }
       }
     },
+    "Remove screenshot" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прибрати скріншот"
+          }
+        }
+      }
+    },
     "Remove this comment?" : {
       "localizations" : {
         "uk" : {
@@ -2685,16 +2725,6 @@
         }
       }
     },
-    "Results" : {
-      "localizations" : {
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Результати"
-          }
-        }
-      }
-    },
     "Retry" : {
       "localizations" : {
         "uk" : {
@@ -2711,6 +2741,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Зберегти"
+          }
+        }
+      }
+    },
+    "Screenshot %lld" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скріншот %lld"
+          }
+        }
+      }
+    },
+    "Screenshots" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скріншоти"
           }
         }
       }
@@ -2741,16 +2791,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Шукайте за ім’ям користувача, щоб знайти будь-кого."
-          }
-        }
-      }
-    },
-    "Search emoji" : {
-      "localizations" : {
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Пошук емодзі"
           }
         }
       }
@@ -3265,6 +3305,16 @@
         }
       }
     },
+    "Up to 3. Only moderators see them." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До 3 штук. Їх бачать лише модератори."
+          }
+        }
+      }
+    },
     "User %@" : {
       "localizations" : {
         "uk" : {
@@ -3401,6 +3451,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Чому ви скаржитеся на цього користувача?"
+          }
+        }
+      }
+    },
+    "With screenshots" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зі скріншотами"
           }
         }
       }

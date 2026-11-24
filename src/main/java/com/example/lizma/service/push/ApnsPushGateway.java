@@ -86,8 +86,9 @@ public class ApnsPushGateway implements PushGateway {
                 .timeout(Duration.ofSeconds(10))
                 .header("authorization", "bearer " + providerToken(renewProviderToken))
                 .header("apns-topic", settings.topic())
-                .header("apns-push-type", "alert")
-                .header("apns-priority", "10")
+                // A silent one must be "background" with priority 5, or APNs refuses it.
+                .header("apns-push-type", message.type().silent ? "background" : "alert")
+                .header("apns-priority", message.type().silent ? "5" : "10")
                 .header("apns-expiration", String.valueOf(message.expiresAt() == null ? 0 : message.expiresAt().getEpochSecond()))
                 .header("content-type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload(message)));
@@ -99,6 +100,12 @@ public class ApnsPushGateway implements PushGateway {
 
     /** The JSON APNs delivers: the alert as a key of the app's strings with its arguments, plus where a tap leads. */
     String payload(PushMessage message) {
+        if (message.type().silent) {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("aps", Map.of("content-available", 1));
+            body.putAll(message.route());
+            return json(body);
+        }
         Map<String, Object> alert = new LinkedHashMap<>();
         alert.put("loc-key", message.type().locKey);
         alert.put("loc-args", message.args());
@@ -111,6 +118,10 @@ public class ApnsPushGateway implements PushGateway {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("aps", aps);
         body.putAll(message.route());
+        return json(body);
+    }
+
+    private String json(Map<String, Object> body) {
         try {
             return objectMapper.writeValueAsString(body);
         } catch (JsonProcessingException e) {

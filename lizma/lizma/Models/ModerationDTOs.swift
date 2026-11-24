@@ -42,6 +42,8 @@ struct FeedbackRequest: Encodable {
     let contactEmail: String?
     let appVersion: String?
     let osVersion: String?
+    /// Screenshots uploaded before (`AttachmentService`), at most three.
+    var attachmentIds: [String] = []
 }
 
 enum FeedbackStatus: String, Decodable {
@@ -62,6 +64,8 @@ struct FeedbackItem: Decodable, Identifiable, Hashable {
     let createdAt: String
     let handledAt: String?
     let handledByUsername: String?
+    /// Screenshots, paths under /admin/attachments (moderators only); missing from older servers.
+    let attachments: [String]?
 }
 
 // MARK: - Reports
@@ -97,6 +101,8 @@ struct AdminReport: Decodable, Identifiable, Hashable {
     let resolvedAt: String?
     let resolution: ReportAction?
     let resolvedByUsername: String?
+    /// Screenshots the reporter attached, paths under /admin/attachments (moderators only).
+    let attachments: [String]?
 }
 
 extension ReportTargetType: Hashable {}

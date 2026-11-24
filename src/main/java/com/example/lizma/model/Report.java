@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /** A user's complaint about a post, a comment or another user, waiting for a moderator. */
 @Entity
@@ -58,4 +60,10 @@ public class Report {
 
     /** When it went out in a notification email; null until then. */
     private Instant notifiedAt;
+
+    /** Screenshots the reporter attached, oldest first (see Attachment). */
+    @OneToMany(mappedBy = "report")
+    @OrderBy("createdAt")
+    @Builder.Default
+    private List<Attachment> attachments = new ArrayList<>();
 }

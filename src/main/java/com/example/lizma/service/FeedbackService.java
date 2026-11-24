@@ -2,6 +2,7 @@ package com.example.lizma.service;
 
 import com.example.lizma.exception.NotFoundException;
 import com.example.lizma.exception.TooManyRequestsException;
+import com.example.lizma.model.Attachment;
 import com.example.lizma.model.Feedback;
 import com.example.lizma.model.Users;
 import com.example.lizma.model.dto.FeedbackRequest;
@@ -33,6 +34,7 @@ public class FeedbackService {
 
     private final FeedbackRepository repository;
     private final UserService userService;
+    private final AttachmentService attachmentService;
 
     @Transactional
     public void submit(Long userId, FeedbackRequest request) {
@@ -40,6 +42,7 @@ public class FeedbackService {
         if (repository.countByAuthorAndCreatedAtAfter(author, Instant.now().minus(Duration.ofHours(1))) >= MAX_PER_HOUR) {
             throw new TooManyRequestsException("You've sent a lot of messages. Please try again in an hour.");
         }
+        List<Attachment> screenshots = attachmentService.requireUnsent(author, request.attachmentIds());
         Feedback saved = repository.save(Feedback.builder()
                 .author(author)
                 .category(request.category())
@@ -50,6 +53,7 @@ public class FeedbackService {
                 .status(FeedbackStatus.NEW)
                 .createdAt(Instant.now())
                 .build());
+        attachmentService.attach(screenshots, saved);
         log.info("New feedback #{} ({}) from {}", saved.getId(), saved.getCategory(), author.getUsername());
     }
 
@@ -94,7 +98,8 @@ public class FeedbackService {
                 feedback.getStatus(),
                 feedback.getCreatedAt(),
                 feedback.getHandledAt(),
-                feedback.getHandledBy() != null ? feedback.getHandledBy().getUsername() : null);
+                feedback.getHandledBy() != null ? feedback.getHandledBy().getUsername() : null,
+                AttachmentService.urls(feedback.getAttachments()));
     }
 
     private Feedback get(Long id) {

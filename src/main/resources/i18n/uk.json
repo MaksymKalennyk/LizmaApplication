@@ -124,5 +124,11 @@
   "Device registered": "Пристрій зареєстровано",
   "Device removed": "Пристрій видалено",
   "Device token is required": "Потрібен токен пристрою",
-  "This isn't a device token": "Це не токен пристрою"
+  "This isn't a device token": "Це не токен пристрою",
+  "A reaction is one emoji": "Реакція — це один емодзі",
+  "You can add up to 3 screenshots": "Можна додати до 3 скріншотів",
+  "A screenshot couldn't be attached. Add it again.": "Не вдалося додати скріншот. Додайте його ще раз.",
+  "You've added a lot of screenshots. Please try again later.": "Ви додали забагато скріншотів. Спробуйте пізніше.",
+  "Sign in again to set up the widget": "Увійдіть знову, щоб налаштувати віджет",
+  "Open Lizma to sign in": "Відкрийте Lizma, щоб увійти"
 }

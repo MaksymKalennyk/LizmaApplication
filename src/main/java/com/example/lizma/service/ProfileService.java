@@ -99,10 +99,10 @@ public class ProfileService {
         return getProfile(user, user.getUsername());
     }
 
-    /** Stores a new photo (see {@link AvatarImages}); the old one is deleted and its URL stops working. */
+    /** Stores a new photo (see {@link UploadedImages}); the old one is deleted and its URL stops working. */
     @Transactional
     public String setAvatar(Users me, byte[] upload) {
-        byte[] jpeg = AvatarImages.toSquareJpeg(upload);
+        byte[] jpeg = UploadedImages.avatar(upload);
         Users user = userService.getById(me.getId());
         avatarRepository.deleteByUser(user);
         avatarRepository.flush();

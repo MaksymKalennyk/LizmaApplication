@@ -30,6 +30,10 @@ struct RootView: View {
             // Asks for notifications once; afterwards keeps this phone's token with the signed-in user.
             if auth.isSignedIn {
                 await PushManager.shared.start()
+                // The home screen widget gets its key and shows friends' songs.
+                await WidgetBridge.signedIn()
+            } else {
+                WidgetBridge.signedOut()
             }
         }
         .alert(inviteAlert?.title ?? "", isPresented: isShowingInviteAlert, presenting: inviteAlert) { _ in
@@ -44,6 +48,11 @@ struct RootView: View {
     }
 
     private func handle(url: URL) {
+        // A song tapped in the home screen widget: MainTabs opens the post (once signed in).
+        if let postId = DeepLink.parsePostId(from: url) {
+            PushManager.shared.pendingRoute = .post(id: postId, showComments: false)
+            return
+        }
         guard let token = DeepLink.parseInviteToken(from: url) else { return }
         if auth.isSignedIn {
             Task { await acceptInvite(token: token) }

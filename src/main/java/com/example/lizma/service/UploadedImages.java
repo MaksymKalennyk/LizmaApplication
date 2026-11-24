@@ -19,24 +19,48 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.function.BiFunction;
 
 /**
- * Turns an uploaded photo into the stored profile photo: the centre square, 512×512, re-encoded as JPEG.
- * Re-encoding drops every bit of metadata (EXIF, GPS position, camera), and only the decoded pixels are kept,
- * so whatever else was in the file never reaches other users.
+ * Turns an uploaded picture into the one the server keeps: a profile photo (the centre square, 512×512) or a
+ * screenshot for a report or feedback (whole, at most 2000 px on its long side). Both are re-encoded as JPEG,
+ * which drops every bit of metadata (EXIF, GPS position, camera): only the decoded pixels are kept.
  */
-final class AvatarImages {
+final class UploadedImages {
 
-    static final int SIZE = 512;
+    static final int AVATAR_SIZE = 512;
+    /** Enough to read any text on a phone screenshot. */
+    static final int SCREENSHOT_MAX_SIDE = 2000;
     static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
     private static final int MIN_SIDE = 64;
     /** Refused before decoding: a small file can claim huge dimensions and exhaust memory. */
     private static final long MAX_PIXELS = 50_000_000L;
 
-    private AvatarImages() {
+    private UploadedImages() {
     }
 
-    static byte[] toSquareJpeg(byte[] upload) {
+    /** What part of the picture to keep and how big the result is. */
+    private record Plan(Rectangle region, int width, int height) {
+    }
+
+    /** The profile photo: the centre square, 512×512. */
+    static byte[] avatar(byte[] upload) {
+        return convert(upload, 0.85f, (width, height) -> {
+            int side = Math.min(width, height);
+            return new Plan(new Rectangle((width - side) / 2, (height - side) / 2, side, side), AVATAR_SIZE, AVATAR_SIZE);
+        });
+    }
+
+    /** A screenshot: the whole picture in its own proportions, made smaller only when it's bigger than needed. */
+    static byte[] screenshot(byte[] upload) {
+        return convert(upload, 0.8f, (width, height) -> {
+            double scale = Math.min(1.0, (double) SCREENSHOT_MAX_SIDE / Math.max(width, height));
+            return new Plan(new Rectangle(0, 0, width, height),
+                    Math.max(1, (int) Math.round(width * scale)), Math.max(1, (int) Math.round(height * scale)));
+        });
+    }
+
+    private static byte[] convert(byte[] upload, float quality, BiFunction<Integer, Integer, Plan> planner) {
         if (upload == null || upload.length == 0) {
             throw new InvalidActionException("Choose a photo");
         }
@@ -59,13 +83,13 @@ final class AvatarImages {
                 if ((long) width * height > MAX_PIXELS) {
                     throw new InvalidActionException("The photo is too large");
                 }
-                int side = Math.min(width, height);
+                Plan plan = planner.apply(width, height);
                 ImageReadParam param = reader.getDefaultReadParam();
-                param.setSourceRegion(new Rectangle((width - side) / 2, (height - side) / 2, side, side));
-                // Read big photos at a fraction of their size; the last step down is done smoothly below.
-                int step = Math.max(1, side / (SIZE * 2));
+                param.setSourceRegion(plan.region());
+                // Read big pictures at a fraction of their size; the last step down is done smoothly below.
+                int step = Math.max(1, Math.min(plan.region().width / (plan.width() * 2), plan.region().height / (plan.height() * 2)));
                 param.setSourceSubsampling(step, step, 0, 0);
-                return encode(scale(reader.read(0, param)));
+                return encode(scale(reader.read(0, param), plan.width(), plan.height()), quality);
             } finally {
                 reader.dispose();
             }
@@ -77,8 +101,8 @@ final class AvatarImages {
         }
     }
 
-    private static BufferedImage scale(BufferedImage source) {
-        BufferedImage target = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_RGB);
+    private static BufferedImage scale(BufferedImage source, int width, int height) {
+        BufferedImage target = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = target.createGraphics();
         try {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -86,22 +110,22 @@ final class AvatarImages {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             // Transparent parts of a PNG become white instead of black.
             g.setColor(Color.WHITE);
-            g.fillRect(0, 0, SIZE, SIZE);
-            g.drawImage(source, 0, 0, SIZE, SIZE, null);
+            g.fillRect(0, 0, width, height);
+            g.drawImage(source, 0, 0, width, height, null);
         } finally {
             g.dispose();
         }
         return target;
     }
 
-    private static byte[] encode(BufferedImage image) throws IOException {
+    private static byte[] encode(BufferedImage image, float quality) throws IOException {
         ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try (ImageOutputStream out = ImageIO.createImageOutputStream(bytes)) {
             writer.setOutput(out);
             ImageWriteParam param = writer.getDefaultWriteParam();
             param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            param.setCompressionQuality(0.85f);
+            param.setCompressionQuality(quality);
             writer.write(null, new IIOImage(image, null, null), param);
         } finally {
             writer.dispose();

@@ -8,6 +8,7 @@ struct FeedbackFormView: View {
     @State private var category: FeedbackCategory = .idea
     @State private var message = ""
     @State private var email = ""
+    @State private var screenshots: [UIImage] = []
     @State private var isSending = false
     @State private var errorMessage: String?
     /// The server's thank-you message, shown once the feedback went through.
@@ -40,6 +41,12 @@ struct FeedbackFormView: View {
                     if message.utf16.count > Self.maxMessageLength - 200 {
                         Text("\(message.utf16.count)/\(Self.maxMessageLength)")
                     }
+                }
+
+                Section {
+                    ScreenshotPicker(images: $screenshots)
+                } footer: {
+                    Text("Up to 3. Only moderators see them.")
                 }
 
                 Section {
@@ -96,7 +103,7 @@ struct FeedbackFormView: View {
             } message: {
                 Text(confirmation ?? "")
             }
-            .interactiveDismissDisabled(isSending || !trimmedMessage.isEmpty)
+            .interactiveDismissDisabled(isSending || !trimmedMessage.isEmpty || !screenshots.isEmpty)
         }
     }
 
@@ -143,12 +150,13 @@ struct FeedbackFormView: View {
         defer { isSending = false }
 
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        let request = FeedbackRequest(category: category,
+        var request = FeedbackRequest(category: category,
                                       message: trimmedMessage,
                                       contactEmail: trimmedEmail.isEmpty ? nil : trimmedEmail,
                                       appVersion: Self.appVersion,
                                       osVersion: Self.osVersion)
         do {
+            request.attachmentIds = try await AttachmentService.shared.upload(screenshots)
             confirmation = try await ModerationService.shared.sendFeedback(request)
         } catch {
             guard !error.isCancellation else { return }

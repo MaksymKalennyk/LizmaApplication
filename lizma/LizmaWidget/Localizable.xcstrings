@@ -1,0 +1,59 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Friends' songs" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пісні друзів"
+          }
+        }
+      }
+    },
+    "Lizma" : {
+      "shouldTranslate" : false
+    },
+    "No songs from friends yet" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Друзі ще не ділилися піснями"
+          }
+        }
+      }
+    },
+    "Open Lizma to sign in" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрийте Lizma, щоб увійти"
+          }
+        }
+      }
+    },
+    "The latest songs your friends shared." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Останні пісні, якими поділилися ваші друзі."
+          }
+        }
+      }
+    },
+    "When friends share a song, it shows up here." : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Коли друг поділиться піснею, вона з’явиться тут."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

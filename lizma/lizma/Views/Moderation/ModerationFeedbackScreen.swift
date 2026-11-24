@@ -92,6 +92,10 @@ private struct FeedbackRow: View {
                         Image(systemName: "envelope.fill")
                             .accessibilityLabel("Left an email")
                     }
+                    if let count = item.attachments?.count, count > 0 {
+                        Image(systemName: "photo")
+                            .accessibilityLabel("With screenshots")
+                    }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -118,6 +122,13 @@ struct FeedbackDetailScreen: View {
                     .padding(.vertical, 4)
             } header: {
                 Label(item.category.label, systemImage: item.category.systemImage)
+            }
+
+            if let screenshots = item.attachments, !screenshots.isEmpty {
+                Section("Screenshots") {
+                    ScreenshotStrip(paths: screenshots)
+                        .padding(.vertical, 4)
+                }
             }
 
             Section {

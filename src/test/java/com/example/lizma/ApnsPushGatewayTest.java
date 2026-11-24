@@ -122,6 +122,21 @@ class ApnsPushGatewayTest {
     }
 
     @Test
+    void aWidgetRefreshIsASilentBackgroundPush() throws Exception {
+        PushMessage refresh = new PushMessage(PushMessage.Type.WIDGET_REFRESH, List.of(), null, null, null,
+                Map.of("type", "widget_refresh"));
+
+        gateway.send(DeviceToken.Environment.PRODUCTION, DEVICE, refresh);
+
+        Request request = requests.get(0);
+        assertThat(request.headers()).containsEntry("apns-push-type", "background").containsEntry("apns-priority", "5");
+        JsonNode body = objectMapper.readTree(request.body());
+        assertThat(body.at("/aps/content-available").asInt()).isEqualTo(1);
+        assertThat(body.at("/aps/alert").isMissingNode()).isTrue();
+        assertThat(body.get("type").asText()).isEqualTo("widget_refresh");
+    }
+
+    @Test
     void aTokenAppleNoLongerKnowsIsReportedSoItCanBeForgotten() {
         answer(410, "{\"reason\":\"Unregistered\",\"timestamp\":1700000000000}");
         answer(400, "{\"reason\":\"BadDeviceToken\"}");

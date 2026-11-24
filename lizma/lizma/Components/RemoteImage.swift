@@ -20,13 +20,21 @@ final class ImageStore {
     }
 
     /// The image, or nil when it couldn't be loaded. Failures aren't remembered: the next call tries again.
-    func image(for url: URL) async -> UIImage? {
+    /// `authorized`: the picture needs the signed-in user's token (moderators' screenshots).
+    func image(for url: URL, authorized: Bool = false) async -> UIImage? {
         if let cached = cachedImage(for: url) { return cached }
         if let running = downloads[url] { return await running.value }
 
         let download = Task<UIImage?, Never> {
-            guard let (data, response) = try? await URLSession.shared.data(from: url) else { return nil }
-            if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) { return nil }
+            let data: Data
+            if authorized {
+                guard let fetched = try? await APIClient.shared.download(path: url.path) else { return nil }
+                data = fetched
+            } else {
+                guard let (fetched, response) = try? await URLSession.shared.data(from: url) else { return nil }
+                if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) { return nil }
+                data = fetched
+            }
             guard let image = UIImage(data: data) else { return nil }
             // Decode off the main thread, so the first frame with the picture doesn't stutter.
             return await image.byPreparingForDisplay() ?? image
@@ -45,6 +53,7 @@ final class ImageStore {
 /// scrolling or by a list reload as a failure and never tries again, leaving covers blank.
 struct RemoteImage<Content: View, Placeholder: View>: View {
     private let url: URL?
+    private let authorized: Bool
     private let content: (Image) -> Content
     private let placeholder: (_ failed: Bool) -> Placeholder
 
@@ -55,9 +64,11 @@ struct RemoteImage<Content: View, Placeholder: View>: View {
     ///   - content: how to show the loaded picture.
     ///   - placeholder: shown while loading (`failed == false`) and when the picture can't be loaded.
     init(url: URL?,
+         authorized: Bool = false,
          @ViewBuilder content: @escaping (Image) -> Content,
          @ViewBuilder placeholder: @escaping (_ failed: Bool) -> Placeholder) {
         self.url = url
+        self.authorized = authorized
         self.content = content
         self.placeholder = placeholder
         // A picture seen before is there from the first frame, without a flash of the placeholder.
@@ -92,7 +103,7 @@ struct RemoteImage<Content: View, Placeholder: View>: View {
         }
         image = nil
         failed = false
-        let loaded = await ImageStore.shared.image(for: url)
+        let loaded = await ImageStore.shared.image(for: url, authorized: authorized)
         guard !Task.isCancelled else { return }
         if let loaded {
             withAnimation(.easeOut(duration: 0.25)) { image = loaded }

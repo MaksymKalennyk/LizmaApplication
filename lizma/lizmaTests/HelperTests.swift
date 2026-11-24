@@ -55,7 +55,7 @@ struct ReportGroupTests {
         AdminReport(id: id, targetType: type, targetId: target, targetUsername: "bob", targetPreview: "text",
                     targetArtworkUrl: nil, reason: reason, details: nil, reporterUsername: "ann",
                     status: resolvedAt == nil ? .open : .resolved, createdAt: created, resolvedAt: resolvedAt,
-                    resolution: resolvedAt == nil ? nil : .removeContent, resolvedByUsername: nil)
+                    resolution: resolvedAt == nil ? nil : .removeContent, resolvedByUsername: nil, attachments: nil)
     }
 
     @Test func reportsAboutTheSameTargetAreOneGroup() {
