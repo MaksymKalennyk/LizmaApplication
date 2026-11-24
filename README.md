@@ -138,8 +138,9 @@ opened, and when someone posts, the server sends a silent push to those friends 
 (at most one per phone in 15 minutes), so the widget catches up without the app being opened. That push needs APNs like
 the notifications: in the simulator `xcrun simctl push` doesn't reach an app that has no push token, so there opening the
 app is what refreshes it. To try the widget in the simulator, add it in the Today View (swipe right on the first home
-screen page, long-press, Edit → Add Widget): dropping a widget onto the home screen grid can crash SpringBoard in the
-iOS 26.3 simulator (an Apple bug in its ripple animation). Dragging a widget's corner in edit mode changes its size.
+screen page, long-press, Edit → Add Widget): in the iOS 26.3 simulator on an Intel Mac, dropping any widget onto the home
+screen grid, Apple's own too, crashes SpringBoard in its ripple animation (`SBHRippleSimulation`, Apple's bug, not the
+widget's). Dragging a widget's corner in edit mode changes its size.
 
 ## Moderation
 
