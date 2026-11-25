@@ -9,6 +9,8 @@ struct CatalogTrack: Decodable, Identifiable, Equatable {
     let artworkUrl100: String?
     let previewUrl: String?
     let trackViewUrl: String?
+    /// The exact Spotify track, for a song found from a Spotify link (the iTunes API never has one).
+    var spotifyUrl: String? = nil
 
     var id: Int { trackId }
 
@@ -23,6 +25,16 @@ struct CatalogTrack: Decodable, Identifiable, Equatable {
         components.queryItems = components.queryItems?.filter { $0.name != "uo" }
         if components.queryItems?.isEmpty == true { components.queryItems = nil }
         return components.url?.absoluteString
+    }
+}
+
+extension CatalogTrack {
+    /// A song the server found from a pasted link, ready for the composer (its cover is already the large one).
+    init?(shared: SharedTrack) {
+        guard let id = Int(shared.musicId) else { return nil }
+        self.init(trackId: id, trackName: shared.trackName, artistName: shared.artistName,
+                  collectionName: shared.albumName, artworkUrl100: shared.albumCoverUrl,
+                  previewUrl: shared.previewUrl, trackViewUrl: shared.appleMusicUrl, spotifyUrl: shared.spotifyUrl)
     }
 }
 

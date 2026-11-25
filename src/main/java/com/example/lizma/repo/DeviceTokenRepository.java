@@ -14,6 +14,10 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
 
     Optional<DeviceToken> findByToken(String token);
 
+    /** The phones of these users. */
+    @Query("select d from DeviceToken d join fetch d.user where d.user.id in :userIds")
+    List<DeviceToken> findByUserIds(@Param("userIds") java.util.Collection<Long> userIds);
+
     /** The user's phones, most recently registered first. */
     List<DeviceToken> findByUserIdOrderByUpdatedAtDesc(Long userId);
 

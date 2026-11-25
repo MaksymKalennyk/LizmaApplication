@@ -79,6 +79,28 @@ public class RefreshTokenService {
         return Optional.of(new Rotation(token.getUser(), issue(token.getUser(), token.getFamilyId())));
     }
 
+    /** A sign-in: whose it is and the family its tokens share. */
+    public record Session(Long userId, String familyId) {
+    }
+
+    /** The sign-in this token belongs to, if the token is still the usable one (not rotated, revoked or expired). */
+    @Transactional(readOnly = true)
+    public Optional<Session> liveSession(String rawToken) {
+        if (rawToken == null || rawToken.isBlank()) {
+            return Optional.empty();
+        }
+        Instant now = Instant.now();
+        return repository.findByTokenHash(hash(rawToken.strip()))
+                .filter(token -> token.getRevokedAt() == null && token.getExpiresAt().isAfter(now) && token.getUser().isEnabled())
+                .map(token -> new Session(token.getUser().getId(), token.getFamilyId()));
+    }
+
+    /** The sign-in hasn't ended: signed out, revoked or run out. */
+    @Transactional(readOnly = true)
+    public boolean isLive(String familyId) {
+        return repository.existsByFamilyIdAndRevokedAtIsNullAndExpiresAtAfter(familyId, Instant.now());
+    }
+
     /** Sign-out: ends the session the token belongs to and says whose it was. Unknown tokens are ignored. */
     @Transactional
     public Optional<Long> revokeSession(String rawToken) {

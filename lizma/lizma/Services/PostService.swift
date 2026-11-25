@@ -17,6 +17,12 @@ final class PostService {
         try await APIClient.shared.send(PostResponse.self, path: "/posts/\(postId)")
     }
 
+    /// The song an Apple Music or Spotify link pasted into the composer points at (the server looks it up).
+    func resolveLink(_ text: String) async throws -> ShareResolution {
+        try await APIClient.shared.send(ShareResolution.self, path: "/posts/resolve-link", method: "POST",
+                                        body: ShareLinkRequest(url: text))
+    }
+
     func createPost(_ req: PostRequest) async throws -> PostResponse {
         return try await APIClient.shared.send(PostResponse.self, path: "/posts", method: "POST", body: req)
     }

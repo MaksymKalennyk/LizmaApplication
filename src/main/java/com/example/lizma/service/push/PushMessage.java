@@ -18,21 +18,26 @@ public record PushMessage(Type type, List<String> args, String threadId, String 
                           Map<String, Object> route) {
 
     public enum Type {
-        FRIEND_REQUEST("PUSH_FRIEND_REQUEST", "friend_request"),
-        NEW_FRIEND("PUSH_NEW_FRIEND", "new_friend"),
-        REACTION("PUSH_REACTION", "reaction"),
-        COMMENT("PUSH_COMMENT", "comment"),
-        REPLY("PUSH_REPLY", "reply"),
-        DAILY_REMINDER("PUSH_DAILY_REMINDER", "daily_reminder");
+        FRIEND_REQUEST("PUSH_FRIEND_REQUEST", "friend_request", false),
+        NEW_FRIEND("PUSH_NEW_FRIEND", "new_friend", false),
+        REACTION("PUSH_REACTION", "reaction", false),
+        COMMENT("PUSH_COMMENT", "comment", false),
+        REPLY("PUSH_REPLY", "reply", false),
+        DAILY_REMINDER("PUSH_DAILY_REMINDER", "daily_reminder", false),
+        /** Silent: a friend posted, the app refreshes its home screen widget. Nothing is shown. */
+        WIDGET_REFRESH(null, "widget_refresh", true);
 
-        /** The app's string for the text. */
+        /** The app's string for the text; null for a silent one. */
         public final String locKey;
         /** The {@code type} the app routes a tap by. */
         public final String route;
+        /** A background notification: wakes the app, shows nothing. */
+        public final boolean silent;
 
-        Type(String locKey, String route) {
+        Type(String locKey, String route, boolean silent) {
             this.locKey = locKey;
             this.route = route;
+            this.silent = silent;
         }
     }
 }

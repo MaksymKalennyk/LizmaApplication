@@ -10,6 +10,9 @@ import com.example.lizma.repo.PostRepository;
 import com.example.lizma.repo.UserRepository;
 import com.example.lizma.service.ActivityEvent;
 import com.example.lizma.service.BlockService;
+import com.example.lizma.service.FriendshipService;
+import com.example.lizma.service.PostCreatedEvent;
+import com.example.lizma.service.WidgetService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -52,26 +55,34 @@ public class PushNotifier {
     private static final Duration SOCIAL_EXPIRY = Duration.ofDays(1);
     /** The reminder is about today: a phone that's offline until evening doesn't get it any more. */
     private static final Duration REMINDER_EXPIRY = Duration.ofHours(5);
+    /** A widget counts as on someone's screen if it fetched this recently. */
+    static final Duration WIDGET_ACTIVE = Duration.ofDays(3);
+    /** At most one silent widget refresh per phone in this time: iOS allows only a few background pushes an hour. */
+    static final Duration WIDGET_QUIET = Duration.ofMinutes(15);
 
     private final DeviceTokenRepository devices;
     private final UserRepository users;
     private final PostRepository posts;
     private final PostCommentRepository comments;
     private final BlockService blocks;
+    private final FriendshipService friendships;
+    private final WidgetService widgets;
     private final PushGateway gateway;
     private final TransactionTemplate transactions;
     private final ZoneId reminderZone;
     private final Map<String, Instant> recentlySent = new ConcurrentHashMap<>();
 
     public PushNotifier(DeviceTokenRepository devices, UserRepository users, PostRepository posts,
-                        PostCommentRepository comments, BlockService blocks, PushGateway gateway,
-                        PlatformTransactionManager transactionManager,
+                        PostCommentRepository comments, BlockService blocks, FriendshipService friendships,
+                        WidgetService widgets, PushGateway gateway, PlatformTransactionManager transactionManager,
                         @Value("${app.push.daily-reminder-zone:Europe/Kyiv}") String reminderZone) {
         this.devices = devices;
         this.users = users;
         this.posts = posts;
         this.comments = comments;
         this.blocks = blocks;
+        this.friendships = friendships;
+        this.widgets = widgets;
         this.gateway = gateway;
         // Its own transactions: after a commit the finished one is still bound to the thread.
         this.transactions = new TransactionTemplate(transactionManager);
@@ -96,6 +107,33 @@ public class PushNotifier {
         if (deliveries != null) {
             deliveries.forEach(delivery -> delivery.targets().forEach(target -> deliver(target, delivery.message())));
         }
+    }
+
+    /**
+     * A friend posted: a silent push wakes the app of everyone whose widget is on a screen, so it shows the new song
+     * soon instead of at its next scheduled refresh. Phones that got one in the last 15 minutes are skipped.
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPostCreated(PostCreatedEvent event) {
+        List<Target> targets = transactions.execute(status -> widgetRefreshTargets(event.authorId()));
+        if (targets == null || targets.isEmpty()) {
+            return;
+        }
+        PushMessage message = new PushMessage(WIDGET_REFRESH, List.of(), null, null,
+                Instant.now().plus(Duration.ofHours(1)), Map.of("type", WIDGET_REFRESH.route));
+        targets.stream()
+                .filter(target -> !sentWithin("widget:" + target.token(), WIDGET_QUIET))
+                .forEach(target -> deliver(target, message));
+    }
+
+    private List<Target> widgetRefreshTargets(Long authorId) {
+        Users author = users.findById(authorId).orElse(null);
+        if (author == null || author.isBanned()) {
+            return List.of();
+        }
+        List<Long> withWidget = widgets.usersWithWidget(friendships.getFriendIds(author), WIDGET_ACTIVE);
+        return withWidget.isEmpty() ? List.of() : devices.findByUserIds(withWidget).stream().map(Target::of).toList();
     }
 
     @Scheduled(cron = "${app.push.daily-reminder-cron:0 0 13 * * *}", zone = "${app.push.daily-reminder-zone:Europe/Kyiv}")
@@ -207,12 +245,17 @@ public class PushNotifier {
 
     /** True if the same news went out lately; otherwise remembers it as sent now. */
     private boolean sentRecently(String key) {
+        return sentWithin(key, REPEAT_QUIET);
+    }
+
+    /** True if something with this key went out within {@code quiet}; otherwise remembers it as sent now. */
+    private boolean sentWithin(String key, Duration quiet) {
         Instant now = Instant.now();
         if (recentlySent.size() > 10_000) {
             recentlySent.values().removeIf(sentAt -> sentAt.isBefore(now.minus(REPEAT_QUIET)));
         }
         Instant previous = recentlySent.get(key);
-        if (previous != null && previous.isAfter(now.minus(REPEAT_QUIET))) {
+        if (previous != null && previous.isAfter(now.minus(quiet))) {
             return true;
         }
         recentlySent.put(key, now);

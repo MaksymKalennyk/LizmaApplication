@@ -124,5 +124,19 @@
   "Device registered": "Пристрій зареєстровано",
   "Device removed": "Пристрій видалено",
   "Device token is required": "Потрібен токен пристрою",
-  "This isn't a device token": "Це не токен пристрою"
+  "This isn't a device token": "Це не токен пристрою",
+  "A reaction is one emoji": "Реакція — це один емодзі",
+  "You can add up to 3 screenshots": "Можна додати до 3 скріншотів",
+  "A screenshot couldn't be attached. Add it again.": "Не вдалося додати скріншот. Додайте його ще раз.",
+  "You've added a lot of screenshots. Please try again later.": "Ви додали забагато скріншотів. Спробуйте пізніше.",
+  "Sign in again to set up the widget": "Увійдіть знову, щоб налаштувати віджет",
+  "Open Lizma to sign in": "Відкрийте Lizma, щоб увійти",
+  "Sign in again to share songs from other apps": "Увійдіть знову, щоб ділитися піснями з інших застосунків",
+  "Only songs can be shared": "Поділитися можна лише піснею",
+  "Share a song from Apple Music or Spotify": "Поділіться піснею з Apple Music або Spotify",
+  "Couldn't find this song in Apple Music": "Не вдалося знайти цю пісню в Apple Music",
+  "Apple Music isn't answering right now. Try again in a minute.": "Apple Music зараз не відповідає. Спробуйте за хвилину.",
+  "Spotify isn't answering right now. Try again in a minute.": "Spotify зараз не відповідає. Спробуйте за хвилину.",
+  "You've shared a lot of links. Please try again later.": "Ви поділилися забагатьма посиланнями. Спробуйте пізніше.",
+  "Spotify URL is too long": "Посилання на Spotify задовге"
 }

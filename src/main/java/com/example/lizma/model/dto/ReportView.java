@@ -6,6 +6,7 @@ import com.example.lizma.model.enums.ReportStatus;
 import com.example.lizma.model.enums.ReportTargetType;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * A report as moderators see it. {@code targetPreview} is null when the content is already gone;
@@ -25,5 +26,7 @@ public record ReportView(
         Instant createdAt,
         Instant resolvedAt,
         ReportAction resolution,
-        String resolvedByUsername) {
+        String resolvedByUsername,
+        /** Screenshots the reporter attached, for moderators: /admin/attachments/{token}.jpg. */
+        List<String> attachments) {
 }

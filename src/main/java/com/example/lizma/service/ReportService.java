@@ -4,6 +4,7 @@ import com.example.lizma.exception.ConflictException;
 import com.example.lizma.exception.InvalidActionException;
 import com.example.lizma.exception.NotFoundException;
 import com.example.lizma.exception.TooManyRequestsException;
+import com.example.lizma.model.Attachment;
 import com.example.lizma.model.Post;
 import com.example.lizma.model.PostComment;
 import com.example.lizma.model.Report;
@@ -53,6 +54,7 @@ public class ReportService {
     private final AccountService accountService;
     private final ModerationLogService moderationLog;
     private final ProfileService profileService;
+    private final AttachmentService attachmentService;
 
     /** Files a report; reporting the same thing again while it's still open is a no-op. */
     @Transactional
@@ -83,6 +85,7 @@ public class ReportService {
             throw new TooManyRequestsException("You've sent a lot of reports. Please try again later.");
         }
 
+        List<Attachment> screenshots = attachmentService.requireUnsent(reporter, request.getAttachmentIds());
         Report report = reportRepository.save(Report.builder()
                 .reporter(reporter)
                 .targetType(type)
@@ -93,6 +96,7 @@ public class ReportService {
                 .status(ReportStatus.OPEN)
                 .createdAt(Instant.now())
                 .build());
+        attachmentService.attach(screenshots, report);
         log.info("New report #{}: {} {} by {} ({}) needs moderation",
                 report.getId(), type, targetId, reporter.getUsername(), request.getReason());
     }
@@ -198,7 +202,8 @@ public class ReportService {
                 report.getCreatedAt(),
                 report.getResolvedAt(),
                 report.getResolution(),
-                report.getResolvedBy() != null ? report.getResolvedBy().getUsername() : null);
+                report.getResolvedBy() != null ? report.getResolvedBy().getUsername() : null,
+                AttachmentService.urls(report.getAttachments()));
     }
 
     private String preview(Report report) {

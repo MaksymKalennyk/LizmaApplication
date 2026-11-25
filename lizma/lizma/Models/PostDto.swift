@@ -38,6 +38,8 @@ struct PostRequest: Codable {
     let caption: String?
     let previewUrl: String?
     let appleMusicUrl: String?
+    /// The exact Spotify track, for a song found from a Spotify link.
+    var spotifyUrl: String? = nil
 }
 
 struct CommentResponse: Codable, Identifiable {

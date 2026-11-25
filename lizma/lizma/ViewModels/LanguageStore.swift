@@ -31,6 +31,7 @@ final class LanguageStore: ObservableObject {
         guard newCode != code else { return } // e.g. English chosen while the phone is in English anyway
         // Fetched in the old language: the legal pages' links carry it.
         LegalInfoStore.shared.reset()
+        AppExtensions.languageChanged(to: newCode)
         opensProfile = true
         code = newCode
     }

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,6 +63,7 @@ public class PostService {
                 .albumCoverUrl(TrustedMediaUrls.cover(request.getAlbumCoverUrl()))
                 .previewUrl(TrustedMediaUrls.preview(request.getPreviewUrl()))
                 .appleMusicUrl(TrustedMediaUrls.appleMusic(request.getAppleMusicUrl()))
+                .spotifyUrl(TrustedMediaUrls.spotifyTrack(request.getSpotifyUrl()))
                 .caption(blankToNull(request.getCaption()))
                 .build();
         Post saved = postRepository.save(post);
@@ -334,10 +336,26 @@ public class PostService {
             throw new InvalidActionException("Reaction must not be empty");
         }
         String reaction = type.strip();
-        if (reaction.codePointCount(0, reaction.length()) > MAX_REACTION_LENGTH) {
-            throw new InvalidActionException("Reaction is too long");
+        if (reaction.codePointCount(0, reaction.length()) > MAX_REACTION_LENGTH || !isSingleEmoji(reaction)) {
+            throw new InvalidActionException("A reaction is one emoji");
         }
         return reaction;
+    }
+
+    /** One user-perceived character (Unicode's extended grapheme cluster). */
+    private static final Pattern ONE_GRAPHEME = Pattern.compile("\\X");
+
+    /**
+     * Any single emoji, however it's built: with a skin tone, joined into one (families, 🏳️‍🌈, 🧑🏽‍💻), a flag
+     * (🇺🇦, 🏴󠁧󠁢󠁥󠁮󠁧󠁿), a keycap (1️⃣) or one newer than this Java (pictographic code points are reserved ahead).
+     * Plain text, digits and two emoji at once aren't one.
+     */
+    static boolean isSingleEmoji(String text) {
+        if (text == null || text.isEmpty() || !ONE_GRAPHEME.matcher(text).matches()) {
+            return false;
+        }
+        return text.codePoints().anyMatch(c -> Character.isExtendedPictographic(c) || Character.isEmojiPresentation(c))
+                || text.indexOf('\u20E3') >= 0; // keycap: a digit, #, or * with the enclosing keycap mark
     }
 
     /** Posts made from Spotify's catalog link to their track even before the lookup ran. */

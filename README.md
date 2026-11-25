@@ -77,8 +77,9 @@ in Apple Music, or in Spotify: with the exact track when the server knows it, ot
 
 Exact Spotify links come from song.link (`MusicLinkResolver`, after a post is saved and every 2 minutes for posts it
 couldn't do yet). song.link retired its keyless API in 2026 and gives keys only on request (odesli.co/help), so lookups
-run only with `ODESLI_API_KEY`; without it nothing is sent anywhere. Older posts made with Spotify keep their Spotify link
-and play in Spotify's embedded player.
+run only with `ODESLI_API_KEY`; without it nothing is sent anywhere. A song shared from Spotify (see Sharing from Apple
+Music and Spotify) brings its exact Spotify link along. Older posts made with Spotify keep their Spotify link and play in
+Spotify's embedded player.
 
 ## Push notifications
 
@@ -104,6 +105,74 @@ xcrun simctl push booted maxos-industry.lizma payload.apns
 ```
 
 with a payload like `{"aps": {"alert": {"loc-key": "PUSH_COMMENT", "loc-args": ["Liza", "Love it"]}}, "type": "comment", "postId": 1}`.
+
+## Screenshots and emoji
+
+Reports and feedback can carry up to 3 screenshots. The app uploads each one first (`POST /user/attachments`, JPEG or
+PNG up to 10 MB) and sends their ids as `attachmentIds`. The server keeps them as JPEGs of at most 2000 px, without
+metadata (`UploadedImages`), linked to that report or feedback. Only moderators can open them
+(`GET /admin/attachments/{id}.jpg`, never cached by shared caches). The moderators' email says how many there are but
+doesn't carry them. Uploads that were never sent are deleted after a day (`app.attachments.cleanup-cron`). They also go
+with the account of whoever sent them, and with the reports about an account that's deleted.
+
+Reactions take any single emoji, however it's built: skin tones, joined sequences, flags, keycaps, and ones newer than
+the server's Java (`PostService.isSingleEmoji`). Text or two emoji aren't a reaction. Comments keep every emoji as
+written (the database is utf8mb4). The emoji picker has a few rows of favourites, plus a field that opens the phone's
+own emoji keyboard, with its search, skin tones and recently used.
+
+## Home screen widget
+
+The `LizmaWidget` extension shows friends' latest songs: on the home screen the newest one (small), two (medium) or four
+(large), each with its cover, who shared it and how long ago; on the lock screen who and what. A tap opens that post in
+the app (`lizma://post/<id>`).
+
+The widget never gets the user's tokens. After signing in, the app asks the server for a widget key
+(`POST /user/me/widget-key` with the session's refresh token) and puts it, with the server address and the app's
+language, in the App Group `group.maxos-industry.lizma` that the app and the widget share (`lizma/Shared`). The widget
+calls `GET /widget/feed` with the `X-Widget-Key` header, which returns friends' latest 4 posts and nothing else, and keeps
+the last songs and pictures in the group's folder for when the phone is offline. The server stores only the key's SHA-256.
+The key belongs to that sign-in: signing out, the session ending, suspension and account deletion make it useless (401,
+and the widget asks to open Lizma), and keys of ended sessions are deleted every night (`app.extension-keys.cleanup-cron`).
+
+iOS decides when a widget refreshes; this one asks for about every 15 minutes. The app also refreshes it whenever it's
+opened, and when someone posts, the server sends a silent push to those friends whose widget fetched in the last 3 days
+(at most one per phone in 15 minutes), so the widget catches up without the app being opened. That push needs APNs like
+the notifications: in the simulator `xcrun simctl push` doesn't reach an app that has no push token, so there opening the
+app is what refreshes it. To try the widget in the simulator, add it in the Today View (swipe right on the first home
+screen page, long-press, Edit → Add Widget): in the iOS 26.3 simulator on an Intel Mac, dropping any widget onto the home
+screen grid, Apple's own too, crashes SpringBoard in its ripple animation (`SBHRippleSimulation`, Apple's bug, not the
+widget's). Dragging a widget's corner in edit mode changes its size.
+
+## Sharing from Apple Music and Spotify
+
+Lizma is in the share menu of any app that shares a link (the `LizmaShare` extension): in Apple Music, Share Song → Lizma;
+in Spotify, Share → More → Lizma (Spotify's own panel lists only the apps it has deals with). A sheet opens over that app
+with the song, a caption and Post, and the music keeps playing. The composer takes the same links: a song link pasted into
+its search field, or the Paste button, finds the song instead of searching for the words.
+
+The server finds the song (`SharedLinkResolver`; `POST /share/resolve` for the extension, `POST /posts/resolve-link` for
+the composer) as an entry of Apple's catalog, the one every post comes from:
+
+- An Apple Music link names the song (`?i=<id>`, or `/song/…/<id>`): it's looked up by that id with the free iTunes
+  lookup, in the store the link names.
+- A Spotify link names only the track. Spotify's API is closed to apps like this one (see Music), but its public oEmbed
+  gives the title and the cover. Apple's catalog is searched for the title, and the song whose cover is the same picture
+  wins (`CoverFingerprint`: both covers as 16×16 grey cells; the same artwork differs in up to about 41 of the 256 cells,
+  other artwork in 70 or more), as long as its title names the same version: no "Live", "Remix" or "A Cappella" the
+  shared one doesn't have, since versions on one album share its cover. When no song qualifies, up to 4 are offered
+  ("Which one is it?"). The post keeps the exact Spotify track, so "Open in Spotify" opens what was shared.
+- spotify.link, spoti.fi and apple.co short links are followed first; albums, playlists, artists and podcasts are refused
+  ("Only songs can be shared").
+
+Each lookup costs calls to Apple and Spotify, so a user gets 30 in 10 minutes (`app.share.links-per-window`,
+`app.share.window`). Only the link and the phone's region reach the server, and it sends Apple and Spotify nothing about
+the user.
+
+The extension posts with a share key of its own, the same kind as the widget's (both live in `extension_keys`, one per
+sign-in and purpose): the app asks for it after signing in (`POST /user/me/share-key`), keeps it in the App Group's
+Keychain, and the extension sends it as `X-Share-Key` to `/share/resolve` and `/share/posts`. It never renews a session,
+can only find songs and post them, and dies with the sign-in. The simulator has neither Music nor Spotify: share from
+Safari instead (open a music.apple.com or open.spotify.com song page, ⋯ → Share → Lizma).
 
 ## Moderation
 
@@ -154,7 +223,8 @@ its own domain only changes these settings.
 ## Before the App Store (needs the paid Apple Developer Program)
 
 Done and tested without the paid account: push notifications end to end on the server (with a stand-in for APNs) and in
-the simulator (`xcrun simctl push`). Still to do and check once the account exists:
+the simulator (`xcrun simctl push`), the home screen widget and sharing from Safari in the simulator. Still to do and
+check once the account exists:
 
 - **Signing**: the team in Xcode, the App ID `maxos-industry.lizma` registered.
 - **Push capability**: Signing & Capabilities → + Push Notifications (adds `aps-environment`).
@@ -166,6 +236,15 @@ the simulator (`xcrun simctl push`). Still to do and check once the account exis
   tap opens the right screen. Then check that Profile → Notifications switches each kind off, that signing out removes
   the token, and that the texts come in Ukrainian on a Ukrainian phone. For the 13:00 Kyiv reminder, set
   `app.push.daily-reminder-cron` to a time a few minutes ahead.
+- **Widget on an iPhone**: automatic signing registers the App Group for the three App IDs (`maxos-industry.lizma`,
+  `maxos-industry.lizma.LizmaWidget`, `maxos-industry.lizma.LizmaShare`; the free account can do this too, only the
+  silent push needs the paid one). Add the widget while signed in and check that friends' songs show, that a friend's new
+  post reaches it within a minute or so with Lizma in the background (not swiped away), and that signing out turns it
+  into "Open Lizma to sign in".
+- **Sharing on an iPhone** (works with the free account too): from the real apps, Apple Music (Share Song → Lizma) and
+  Spotify (Share → More → Lizma). Check that Lizma is in the menu, that the song is the right one (try a remaster, a live
+  version and a song only on Spotify), that the post opens in both services, and that after signing out the sheet says
+  "Open Lizma to sign in".
 - **TestFlight build** (production APNs): the same checks, the token arrives as `PRODUCTION`.
 - **App icon**: the app has none yet. Add an asset catalog with a 1024×1024 AppIcon (required for upload).
 - **Server online before TestFlight testers and App Review**: a public HTTPS domain, set in
@@ -178,7 +257,9 @@ the simulator (`xcrun simctl push`). Still to do and check once the account exis
   moderation with a demo account that has a friend and posts.
 - **Export compliance**: the app uses only HTTPS, so `ITSAppUsesNonExemptEncryption = NO` in Info.plist saves the
   question on every upload.
-- **Optional**: full in-app Apple Music playback (MusicKit service on the App ID); a song.link key for exact Spotify links.
+- **Optional**: full in-app Apple Music playback (MusicKit service on the App ID); a song.link key for exact Spotify links;
+  once the app needs iOS 26 anyway, WidgetKit push updates (`apns-push-type: widgets`) instead of the silent push, which
+  also reach the widget after the app was swiped away.
 
 ## Configuration
 
@@ -192,6 +273,8 @@ the simulator (`xcrun simctl push`). Still to do and check once the account exis
 | `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_KEY_PATH` (or `APNS_KEY`), `APNS_TOPIC` | `.env` | Push notifications through APNs (see Push notifications); without them they are only logged |
 | `ODESLI_API_KEY` | `.env` | song.link key for exact Spotify links (see Music); optional |
 | `app.push.daily-reminder-cron`, `app.push.daily-reminder-zone` | `application.properties` | When the daily reminder goes out (`0 0 13 * * *`, `Europe/Kyiv`) |
+| `app.extension-keys.cleanup-cron` | `application.properties` | When keys of the widget and the share extension whose sign-in ended are deleted (`0 45 4 * * *`) |
+| `app.share.links-per-window`, `app.share.window` | `application.properties` | How many shared links a user may look up, and in what time (`30`, `10m`) |
 | `token.ttl`, `token.refresh-ttl` | `application.properties` | Access token (`15m`) and session (`30d`) lifetimes |
 | `app.auth.*` | `application.properties` | Sign-in and sign-up limits |
 | `app.externalBaseUrl` | `application.properties` | Base URL used in invite links |

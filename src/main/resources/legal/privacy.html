@@ -30,11 +30,14 @@ This policy explains what we collect, why, and the choices you have. Questions: 
   <li><strong>Your connections:</strong> friends, friend requests, invite links you create and users you block.</li>
   <li><strong>Notifications:</strong> if you allow them, the push token Apple gives your phone for Lizma, and what you chose
     to be notified about (Profile → Notifications).</li>
-  <li><strong>Reports</strong> you send about posts, comments or users.</li>
-  <li><strong>Feedback</strong> you send from the app (Profile → Send feedback): your message, its topic, the app and iOS
-    version, and, only if you enter it, an email address so we can answer you.</li>
+  <li><strong>Reports</strong> you send about posts, comments or users, with any screenshots you attach.</li>
+  <li><strong>Feedback</strong> you send from the app (Profile → Send feedback): your message, its topic, any screenshots
+    you attach, the app and iOS version, and, only if you enter it, an email address so we can answer you.</li>
   <li><strong>Technical data:</strong> our server logs IP addresses and request times to keep the service secure.</li>
-  <li><strong>On your device:</strong> the app keeps your sign-in token in the iOS Keychain and a few settings in app storage. They stay on your device.</li>
+  <li><strong>On your device:</strong> the app keeps your sign-in token in the iOS Keychain and a few settings in app storage.
+    If you add the Lizma widget, it gets a key of its own that can only read your friends' latest songs, and keeps those
+    songs and their pictures for when you're offline. Sharing songs to Lizma from other apps uses another key, kept in the
+    Keychain, that can only post the songs you share. Both keys stop working when you sign out. All of this stays on your device.</li>
 </ul>
 
 <h2>How we use it</h2>
@@ -51,11 +54,14 @@ This policy explains what we collect, why, and the choices you have. Questions: 
 <ul>
   <li>Your posts, comments and reactions are visible to your friends. Your username, display name and profile photo can be
     seen by other users who find you or see your comments, unless you block them.</li>
+  <li>When you share a song to Lizma from another app, or paste its link, the link goes to our server, which looks the song
+    up in Apple's catalog and, for a Spotify link, asks Spotify for the song's title and cover. Neither gets your account details.</li>
   <li>When you search for music, your search text goes from your phone to Apple's iTunes Search service, without your
     account details; covers and previews also load from Apple. Opening a track in Apple Music or Spotify hands over to
     that app or website. Apple's and Spotify's own privacy policies apply to them.</li>
   <li>Notifications are delivered by Apple Push Notification service: we send Apple your phone's push token and the
     notification (for example who commented and the start of the comment).</li>
+  <li>Screenshots you attach to a report or feedback are seen only by our moderators; they aren't sent by email.</li>
   <li>Companies that host our servers process data on our behalf. New reports and feedback are also sent by email to our
     support mailbox, which Google (Gmail) hosts for us.</li>
   <li>We may disclose data when the law requires it.</li>

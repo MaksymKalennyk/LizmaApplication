@@ -29,6 +29,7 @@ struct ReportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var reason: ReportReason?
     @State private var details = ""
+    @State private var screenshots: [UIImage] = []
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     /// The server's thank-you message, shown once the report went through.
@@ -65,6 +66,12 @@ struct ReportSheet: View {
                         .lineLimit(3...6)
                 } footer: {
                     Text("\(details.utf16.count)/\(Self.maxDetailsLength)")
+                }
+
+                Section {
+                    ScreenshotPicker(images: $screenshots)
+                } footer: {
+                    Text("Up to 3. Only moderators see them.")
                 }
 
                 if let errorMessage {
@@ -125,11 +132,12 @@ struct ReportSheet: View {
         defer { isSubmitting = false }
 
         let trimmed = details.trimmingCharacters(in: .whitespacesAndNewlines)
-        let request = ReportRequest(targetType: target.type,
+        var request = ReportRequest(targetType: target.type,
                                     targetId: target.targetId,
                                     reason: reason,
                                     details: trimmed.isEmpty ? nil : Self.limited(trimmed))
         do {
+            request.attachmentIds = try await AttachmentService.shared.upload(screenshots)
             confirmation = try await SafetyService.shared.report(request)
         } catch {
             guard !error.isCancellation else { return }

@@ -43,6 +43,10 @@ public class ContentCleanupService {
     public void deleteUser(Long userId) {
         removeUserContent(userId);
         update("delete from UserBlock b where b.blocked.id = :id", userId);
+        // Screenshots: the user's own, and those on the reports and feedback deleted below.
+        update("delete from Attachment a where a.owner.id = :id"
+                + " or a.report.id in (select r.id from Report r where r.reporter.id = :id or r.targetUser.id = :id)"
+                + " or a.feedback.id in (select f.id from Feedback f where f.author.id = :id)", userId);
         update("delete from Report r where r.reporter.id = :id or r.targetUser.id = :id", userId);
         update("update Report r set r.resolvedBy = null where r.resolvedBy.id = :id", userId);
         update("delete from Feedback f where f.author.id = :id", userId);
@@ -84,6 +88,7 @@ public class ContentCleanupService {
         update("delete from UserBlock b where b.blocker.id = :id", userId);
         update("delete from UserAvatar a where a.user.id = :id", userId);
         update("delete from DeviceToken d where d.user.id = :id", userId);
+        update("delete from ExtensionKey k where k.user.id = :id", userId);
         update("update Users u set u.avatarToken = null, u.displayName = null where u.id = :id", userId);
     }
 

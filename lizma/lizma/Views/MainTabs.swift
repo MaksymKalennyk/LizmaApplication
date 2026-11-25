@@ -41,6 +41,8 @@ struct MainTabs: View {
             await requests.reload()
             await moderation.refresh()
         }
+        // Opening the app is news for the widget too: it shows the friends' songs the app just saw.
+        .onAppear { AppExtensions.reloadWidget() }
         .onReceive(NotificationCenter.default.publisher(for: .friendsChanged)) { _ in
             Task { await requests.reload() }
         }
@@ -51,6 +53,7 @@ struct MainTabs: View {
                     await requests.reload()
                     await moderation.refresh()
                 }
+                AppExtensions.reloadWidget()
             }
         }
         .onChange(of: selectedTab) {

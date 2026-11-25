@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ReportRequest {
     @NotNull(message = "targetType is required")
@@ -19,4 +21,7 @@ public class ReportRequest {
 
     @Size(max = 500, message = "Details must be at most 500 characters")
     private String details;
+    /** Screenshots uploaded before (POST /user/attachments), at most three. */
+    @Size(max = 3, message = "You can add up to 3 screenshots")
+    private List<String> attachmentIds;
 }

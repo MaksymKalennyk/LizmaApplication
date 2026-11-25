@@ -87,6 +87,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         MainActor.assumeIsolated { PushManager.shared.didFailToRegister(error) }
     }
 
+    /// A silent push: a friend posted, and the home screen widget should show it (iOS gives a few seconds).
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+                     fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        guard userInfo["type"] as? String == "widget_refresh" else {
+            completionHandler(.noData)
+            return
+        }
+        MainActor.assumeIsolated { AppExtensions.reloadWidget() }
+        completionHandler(.newData)
+    }
+
     /// While Lizma is open a notification still shows as a banner; news about friends refreshes the requests.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {

@@ -9,7 +9,8 @@
     other data (friends, blocks, reports, notification settings and the push token).
   - Music search goes from the phone to Apple's iTunes Search API (no account data), not to our server.
   - Required-reason APIs: UserDefaults only (AuthService first-launch marker, DeepLink pending invite,
-    PushManager device token), reason CA92.1 = read/write data that only this app uses.
+    PushManager device token), reason CA92.1 = read/write data that only this app uses; and the App Group
+    defaults shared with the home screen widget (its key, the server, the language), reason 1C8F.1.
   Keep this in sync with the "App Privacy" answers in App Store Connect and with /privacy.
 -->
 <plist version="1.0">
@@ -113,6 +114,7 @@
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>CA92.1</string>
+				<string>1C8F.1</string>
 			</array>
 		</dict>
 	</array>

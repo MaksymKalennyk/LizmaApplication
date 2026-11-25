@@ -93,6 +93,31 @@ final class APIClient {
         try await send(type, path: path, method: method, query: query, payload: body.map { Payload.json($0) }, isRetry: false)
     }
 
+    /// The bytes behind an address only the signed-in user may open (a screenshot for moderators). The session
+    /// is renewed once if the token ran out, like for any other request.
+    func download(path: String) async throws -> Data {
+        try await download(path: path, isRetry: false)
+    }
+
+    private func download(path: String, isRetry: Bool) async throws -> Data {
+        let token = await AuthService.shared.validAccessToken()
+        var request = try makeRequest(path: path, method: "GET", query: [], payload: nil, token: token)
+        request.setValue("image/*", forHTTPHeaderField: "Accept")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.unknown }
+        switch http.statusCode {
+        case 200..<300:
+            return data
+        case 401 where !isRetry:
+            if case .renewed = await SessionRenewal.shared.renew() {
+                return try await download(path: path, isRetry: true)
+            }
+            throw APIError.unauthorized
+        default:
+            throw APIError.server(code: http.statusCode, message: prettyMessage(code: http.statusCode, fallback: nil))
+        }
+    }
+
     /// Uploads a file (multipart/form-data) and decodes the answer.
     func upload<T: Decodable>(_ type: T.Type, path: String, method: String = "PUT",
                               field: String, fileName: String, mimeType: String, data: Data) async throws -> T {
