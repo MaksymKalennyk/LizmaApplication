@@ -63,6 +63,7 @@ public class PostService {
                 .albumCoverUrl(TrustedMediaUrls.cover(request.getAlbumCoverUrl()))
                 .previewUrl(TrustedMediaUrls.preview(request.getPreviewUrl()))
                 .appleMusicUrl(TrustedMediaUrls.appleMusic(request.getAppleMusicUrl()))
+                .spotifyUrl(TrustedMediaUrls.spotifyTrack(request.getSpotifyUrl()))
                 .caption(blankToNull(request.getCaption()))
                 .build();
         Post saved = postRepository.save(post);

@@ -52,7 +52,7 @@ final class AuthViewModel: ObservableObject {
 
     func signOut() {
         AuthService.shared.signOut()
-        WidgetBridge.signedOut()
+        AppExtensions.signedOut()
         PreviewPlayer.shared.stop()
         ModerationStore.shared.reset()
         CurrentUserStore.shared.reset()
@@ -68,7 +68,7 @@ final class AuthViewModel: ObservableObject {
 
     private func handleSessionExpired() {
         guard isSignedIn else { return }
-        WidgetBridge.signedOut()
+        AppExtensions.signedOut()
         PreviewPlayer.shared.stop()
         ModerationStore.shared.reset()
         CurrentUserStore.shared.reset()

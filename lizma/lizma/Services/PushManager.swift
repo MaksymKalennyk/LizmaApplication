@@ -94,7 +94,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             completionHandler(.noData)
             return
         }
-        MainActor.assumeIsolated { WidgetBridge.reload() }
+        MainActor.assumeIsolated { AppExtensions.reloadWidget() }
         completionHandler(.newData)
     }
 

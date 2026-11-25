@@ -57,6 +57,16 @@
         }
       }
     },
+    "Copied a song link in Apple Music or Spotify?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювали посилання на пісню в Apple Music чи Spotify?"
+          }
+        }
+      }
+    },
     "%@ deleted the account %@" : {
       "localizations" : {
         "uk" : {
@@ -3421,6 +3431,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Що зробило б Lizma кращою?"
+          }
+        }
+      }
+    },
+    "Which one is it?" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Яка саме?"
           }
         }
       }

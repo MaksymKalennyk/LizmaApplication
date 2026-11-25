@@ -13,6 +13,8 @@ struct PostComposerView: View {
     @State private var isSearching = false
     /// True once a search finished for the current query (to tell "no results" from "not searched yet").
     @State private var hasSearched = false
+    /// The results are the songs a pasted link may be (the server wasn't sure which), not a search.
+    @State private var resultsFromLink = false
 
     @State private var errorMessage: String? = nil
     @State private var searchTask: Task<Void, Never>? = nil
@@ -140,11 +142,26 @@ struct PostComposerView: View {
                     if isSearching {
                         ProgressView()
                     } else if trimmedQuery.isEmpty {
-                        ContentUnavailableView(
-                            "Find a track",
-                            systemImage: "music.note",
-                            description: Text("Search for a song to share with your friends.")
-                        )
+                        ContentUnavailableView {
+                            Label("Find a track", systemImage: "music.note")
+                        } description: {
+                            Text("Search for a song to share with your friends.")
+                        } actions: {
+                            VStack(spacing: 8) {
+                                Text("Copied a song link in Apple Music or Spotify?")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    // The Ukrainian text needs two lines: let it wrap instead of trailing off.
+                                    .fixedSize(horizontal: false, vertical: true)
+                                PasteButton(payloadType: String.self) { strings in
+                                    guard let link = strings.first else { return }
+                                    Task { @MainActor in searchQuery = link }
+                                }
+                                .buttonBorderShape(.capsule)
+                                .labelStyle(.titleAndIcon)
+                            }
+                        }
                     } else if hasSearched {
                         ContentUnavailableView.search(text: trimmedQuery)
                     }
@@ -154,32 +171,11 @@ struct PostComposerView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             } else {
-                ForEach(searchResults) { track in
-                    HStack(spacing: 12) {
-                        Button {
-                            selectedTrack = track
-                        } label: {
-                            HStack(spacing: 12) {
-                                artwork(of: track, side: 48, cornerRadius: 6)
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(track.trackName)
-                                        .font(.body)
-                                        .foregroundStyle(Color.primary)
-                                        .lineLimit(1)
-                                    Text(track.artistName)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                }
-
-                                Spacer(minLength: 0)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-
-                        previewButton(for: track)
+                Section {
+                    resultRows
+                } header: {
+                    if resultsFromLink {
+                        Text("Which one is it?")
                     }
                 }
             }
@@ -191,6 +187,44 @@ struct PostComposerView: View {
         .autocorrectionDisabled()
         .onChange(of: searchQuery) { _, newValue in
             scheduleSearch(for: newValue)
+        }
+    }
+
+    private var resultRows: some View {
+        ForEach(searchResults) { track in
+            HStack(spacing: 12) {
+                Button {
+                    selectedTrack = track
+                } label: {
+                    HStack(spacing: 12) {
+                        artwork(of: track, side: 48, cornerRadius: 6)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(track.trackName)
+                                .font(.body)
+                                .foregroundStyle(Color.primary)
+                                .lineLimit(1)
+                            Text(track.artistName)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            // Choosing among the songs a link may be: the album tells versions apart.
+                            if resultsFromLink, let album = track.collectionName {
+                                Text(album)
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                previewButton(for: track)
+            }
         }
     }
 
@@ -250,6 +284,7 @@ struct PostComposerView: View {
 
     private func scheduleSearch(for query: String) {
         searchTask?.cancel()
+        resultsFromLink = false
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             searchResults = []
@@ -258,11 +293,41 @@ struct PostComposerView: View {
             errorMessage = nil
             return
         }
+        // A pasted link from Apple Music or Spotify names one song: no need to wait for more typing.
+        if SharedLinks.containsMusicLink(trimmed) {
+            searchTask = Task { await findSong(fromLink: trimmed) }
+            return
+        }
         searchTask = Task {
             try? await Task.sleep(for: .milliseconds(500))
             guard !Task.isCancelled else { return }
             await search(trimmed)
         }
+    }
+
+    /// The server finds the song behind the link. When it's sure, the song is picked at once; otherwise the
+    /// likeliest ones are listed to choose from.
+    private func findSong(fromLink link: String) async {
+        isSearching = true
+        errorMessage = nil
+        searchResults = []
+        do {
+            let found = try await PostService.shared.resolveLink(link)
+            guard !Task.isCancelled else { return }
+            let tracks = found.tracks.compactMap(CatalogTrack.init(shared:))
+            searchResults = tracks
+            hasSearched = true
+            if found.matched, let track = tracks.first {
+                selectedTrack = track
+            } else {
+                resultsFromLink = true
+            }
+        } catch {
+            guard !Task.isCancelled, !error.isCancellation else { return }
+            // The server's own words: "Only songs can be shared", "Couldn't find this song in Apple Music"…
+            errorMessage = error.userMessage
+        }
+        isSearching = false
     }
 
     private func search(_ query: String) async {
@@ -296,7 +361,8 @@ struct PostComposerView: View {
             albumCoverUrl: track.artworkURL,
             caption: caption.isEmpty ? nil : caption,
             previewUrl: track.previewUrl,
-            appleMusicUrl: track.appleMusicURL
+            appleMusicUrl: track.appleMusicURL,
+            spotifyUrl: track.spotifyUrl
         )
         do {
             _ = try await PostService.shared.createPost(req)
@@ -317,6 +383,7 @@ struct PostComposerView: View {
         searchResults = []
         isSearching = false
         hasSearched = false
+        resultsFromLink = false
         errorMessage = nil
     }
 }

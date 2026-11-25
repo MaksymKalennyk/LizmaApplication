@@ -69,8 +69,3 @@ struct WidgetFeedPost: Codable, Identifiable, Hashable {
         return withFraction.date(from: createdAt) ?? ISO8601DateFormatter().date(from: createdAt)
     }
 }
-
-/// `POST /user/me/widget-key`.
-struct WidgetKeyResponse: Decodable {
-    let key: String
-}

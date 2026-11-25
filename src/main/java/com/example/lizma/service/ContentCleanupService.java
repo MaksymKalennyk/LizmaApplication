@@ -88,7 +88,7 @@ public class ContentCleanupService {
         update("delete from UserBlock b where b.blocker.id = :id", userId);
         update("delete from UserAvatar a where a.user.id = :id", userId);
         update("delete from DeviceToken d where d.user.id = :id", userId);
-        update("delete from WidgetKey k where k.user.id = :id", userId);
+        update("delete from ExtensionKey k where k.user.id = :id", userId);
         update("update Users u set u.avatarToken = null, u.displayName = null where u.id = :id", userId);
     }
 

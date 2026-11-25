@@ -31,9 +31,9 @@ struct RootView: View {
             if auth.isSignedIn {
                 await PushManager.shared.start()
                 // The home screen widget gets its key and shows friends' songs.
-                await WidgetBridge.signedIn()
+                await AppExtensions.signedIn()
             } else {
-                WidgetBridge.signedOut()
+                AppExtensions.signedOut()
             }
         }
         .alert(inviteAlert?.title ?? "", isPresented: isShowingInviteAlert, presenting: inviteAlert) { _ in

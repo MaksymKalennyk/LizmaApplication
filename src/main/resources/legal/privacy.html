@@ -36,7 +36,8 @@ This policy explains what we collect, why, and the choices you have. Questions: 
   <li><strong>Technical data:</strong> our server logs IP addresses and request times to keep the service secure.</li>
   <li><strong>On your device:</strong> the app keeps your sign-in token in the iOS Keychain and a few settings in app storage.
     If you add the Lizma widget, it gets a key of its own that can only read your friends' latest songs, and keeps those
-    songs and their pictures for when you're offline; the key stops working when you sign out. All of this stays on your device.</li>
+    songs and their pictures for when you're offline. Sharing songs to Lizma from other apps uses another key, kept in the
+    Keychain, that can only post the songs you share. Both keys stop working when you sign out. All of this stays on your device.</li>
 </ul>
 
 <h2>How we use it</h2>
@@ -53,6 +54,8 @@ This policy explains what we collect, why, and the choices you have. Questions: 
 <ul>
   <li>Your posts, comments and reactions are visible to your friends. Your username, display name and profile photo can be
     seen by other users who find you or see your comments, unless you block them.</li>
+  <li>When you share a song to Lizma from another app, or paste its link, the link goes to our server, which looks the song
+    up in Apple's catalog and, for a Spotify link, asks Spotify for the song's title and cover. Neither gets your account details.</li>
   <li>When you search for music, your search text goes from your phone to Apple's iTunes Search service, without your
     account details; covers and previews also load from Apple. Opening a track in Apple Music or Spotify hands over to
     that app or website. Apple's and Spotify's own privacy policies apply to them.</li>

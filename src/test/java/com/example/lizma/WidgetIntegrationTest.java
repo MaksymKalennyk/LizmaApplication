@@ -1,7 +1,7 @@
 package com.example.lizma;
 
 import com.example.lizma.model.DeviceToken;
-import com.example.lizma.repo.WidgetKeyRepository;
+import com.example.lizma.repo.ExtensionKeyRepository;
 import com.example.lizma.service.push.PushMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +37,7 @@ class WidgetIntegrationTest extends ApiTestSupport {
     @Autowired
     private PushNotificationsTest.RecordingGateway gateway;
     @Autowired
-    private WidgetKeyRepository widgetKeys;
+    private ExtensionKeyRepository widgetKeys;
 
     /** A user with a session of their own: the refresh token a widget key is tied to. */
     private record Phone(User user, String refreshToken) {

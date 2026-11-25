@@ -157,3 +157,37 @@ struct LanguageSettingsTests {
         #expect(LanguageSettings.locale(for: "uk").language.languageCode?.identifier == "uk")
     }
 }
+
+struct SharedLinkTests {
+    @Test(arguments: [
+        "https://music.apple.com/ua/album/levitating/1538003494?i=1538003843",
+        "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b?si=abc",
+        "Listen on Spotify: https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b",
+        "https://spotify.link/aBcD3fGh",
+        "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+    ])
+    func aMusicLinkIsLookedUpNotSearched(text: String) {
+        #expect(SharedLinks.containsMusicLink(text))
+    }
+
+    @Test(arguments: ["blinding lights", "The Weeknd", "https://www.youtube.com/watch?v=4NRXx6U8ABQ"])
+    func wordsAndOtherLinksAreSearched(text: String) {
+        #expect(!SharedLinks.containsMusicLink(text))
+    }
+
+    @Test func aFoundSongComesToTheComposerWithItsSpotifyTrack() throws {
+        let shared = SharedTrack(musicId: "1488408568", trackName: "Blinding Lights", artistName: "The Weeknd",
+                                 albumName: "After Hours",
+                                 albumCoverUrl: "https://is1-ssl.mzstatic.com/image/thumb/x/600x600bb.jpg",
+                                 previewUrl: nil,
+                                 appleMusicUrl: "https://music.apple.com/ua/album/after-hours/1?i=1488408568",
+                                 spotifyUrl: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b")
+        let track = try #require(CatalogTrack(shared: shared))
+        #expect(track.trackId == 1488408568)
+        #expect(track.artworkURL == shared.albumCoverUrl)
+        #expect(track.appleMusicURL == shared.appleMusicUrl)
+        #expect(track.spotifyUrl == shared.spotifyUrl)
+        #expect(CatalogTrack(shared: SharedTrack(musicId: "not-a-number", trackName: "", artistName: "", albumName: nil,
+                                                 albumCoverUrl: nil, previewUrl: nil, appleMusicUrl: nil, spotifyUrl: nil)) == nil)
+    }
+}

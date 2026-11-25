@@ -35,4 +35,7 @@ public class PostRequest {
 
     @Size(max = 512, message = "Apple Music URL is too long")
     private String appleMusicUrl;
+    /** The exact Spotify track, when the song was shared from Spotify (open.spotify.com/track/{id}). */
+    @Size(max = 512, message = "Spotify URL is too long")
+    private String spotifyUrl;
 }
